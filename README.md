@@ -1,23 +1,32 @@
 # ATLYSS Archipelago
 
-Archipelago randomizer implementation for ATLYSS. Enables multiworld randomizer gameplay with 137+ randomizable items, quest and level-based location checks, and configurable progression options.
+Archipelago randomizer implementation for ATLYSS. Enables multiworld randomizer gameplay with randomizable items, quest and level-based location checks, and configurable progression options.
 
 ## Installation
 
-### Step 1: Install Archipelago
-Download and install Archipelago 0.5.0 or later from the official Archipelago releases.
+### Manual Installation
 
-### Step 2: Install the World
-Place `atlyss.apworld` in your Archipelago installation folder under `lib/worlds/` or `custom_worlds/`.
+1. **Install Archipelago** — Download and install Archipelago 0.5.0 or later from the official Archipelago releases.
 
-### Step 3: Install BepInEx
-Download BepInEx 5.4.23.4 and extract it to your ATLYSS game directory. Run the game once to initialize BepInEx.
+2. **Install the world** — Place `atlyss.apworld` in your Archipelago installation folder under `custom_worlds/`.
 
-### Step 4: Install the Mod
-Place the DLL files from the `Plugin` folder into `ATLYSS/BepInEx/plugins/`. If installing via Thunderstore, the mod will be installed automatically.
+3. **Install BepInEx** — Download BepInEx 5.4.23.4 and extract it to your ATLYSS game directory. Run the game once to initialize BepInEx.
 
-### Step 5: Connect In-Game
-Enter your server address, slot name, and password if required. Launch ATLYSS and press F5 to connect to your Archipelago server. 
+4. **Install the mod** — Place the DLL files from the `Plugin` folder into `ATLYSS/BepInEx/plugins/`.
+
+5. **Connect in-game** — Launch ATLYSS and go into **Settings** > **Archipelago**, enter your server address, slot name, and password as needed. Go into **Singleplayer** > **Create your Character**, **Select Character** afterwards and press F5 to connect to your Archipelago server.
+
+### Mod Manager (r2modman)
+
+1. **Install r2modman** — Download from [Thunderstore Mod Manager](https://thunderstore.io/package/ebkr/r2modman/) and install it, or use your distro/package manager if you prefer.
+
+2. **Create an ATLYSS profile** — Open r2modman, choose **Select game** → **ATLYSS**, then **Create profile**. Set **Browse** to your ATLYSS install folder (the directory that contains the game executable).
+
+3. **Install dependencies** — In that profile, open **Online** (or **Get mods**), install **AtlyssArchipelago** (should prompt to install BepInExPack, if not, search and install it). Start the game once from **Start modded** so BepInEx can generate its folders.
+
+4. **Install Archipelago and the world** — r2modman does not manage Archipelago. Install Archipelago 0.5.0 or later separately, then add `atlyss.apworld` under `custom_worlds/` under Archipelago's root directory as in [Manual Installation](#manual-installation).
+
+5. **Connect in-game** — Launch ATLYSS via **Start modded**, go into **Settings** > **Archipelago**, enter your server address, slot name, and password as needed. Go into **Singleplayer** > **Create your Character**, **Select Character** afterwards and press F5 to connect to your Archipelago server.
 
 ## Configuration
 
