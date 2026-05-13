@@ -100,19 +100,6 @@ def gen_create_regions(world):
         make_event_location(world, f"Quest Completion: {location[0]}", location[0], f"Complete: {location[0]}", None,
                             region_map[location[1]], rule_map)
 
-    # Class-specific achievement locations are gated by both the achievements toggle AND the active class set.
-    if options.achievements and options.is_class("fighter"):
-        make_location(world, "Becoming a Fighter", region_map["Sanctum"], rule_map)
-        make_location(world, "Judgement", region_map["Sanctum"], rule_map)
-
-    if options.achievements and options.is_class("mystic"):
-        make_location(world, "Becoming a Mystic", region_map["Sanctum"], rule_map)
-        make_location(world, "Corrupted Arcana", region_map["Sanctum"], rule_map)
-        make_location(world, "Holier than Thou", region_map["Sanctum"], rule_map)
-
-    if options.achievements and options.is_class("bandit"):
-        make_location(world, "Becoming a Bandit", region_map["Sanctum"], rule_map)
-
     for region in region_map.values():
         world.multiworld.regions.append(region)
 

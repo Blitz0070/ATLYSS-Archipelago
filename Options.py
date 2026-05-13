@@ -53,37 +53,13 @@ class Achievements(DefaultOnToggle):
     """
 	Whether in-game achievements are tracked as Archipelago locations.
 	When enabled (default), unlocking achievements such as 'A New Journey',
-	'Trout Master', 'Skill Student', subclass picks, dungeon clears, 'Altered
-	Vision', 'Rude!', etc. sends checks to other players (adds up to 18
-	locations, fewer if a class is unselected).
+	'Trout Master', 'Skill Student', dungeon clears, 'Altered Vision',
+	'Rude!', etc. sends checks to other players (12 locations).
 	When disabled, no achievement locations are placed in this slot and the
 	mod will not send their checks during play; pick this for a shorter or
 	more boss/quest-focused run.
-	"""
+    """
     display_name = "Achievements"
-
-
-class MainClass(Choice):
-    """
-	What you chose to be as your main class
-	"""
-    display_name = "Main Class"
-    option_fighter = 0
-    option_bandit = 1
-    option_mystic = 2
-    default = 0
-
-
-class SecondaryClass(Choice):
-    """
-	What you chose to be as your secondary class
-	"""
-    display_name = "Secondary Class"
-    option_fighter = 0
-    option_bandit = 1
-    option_mystic = 2
-    option_none = 3
-    default = 0
 
 
 class ExperienceMultiplier(Choice):
@@ -112,25 +88,4 @@ class AtlyssOptions(PerGameCommonOptions):
     random_portals: RandomPortals
     shop_sanity: ShopSanity
     achievements: Achievements
-    main_class: MainClass
-    secondary_class: SecondaryClass
     experience_multiplier: ExperienceMultiplier
-
-    def is_class(self, class_name):
-        class_name_lower = class_name.lower()
-        if class_name_lower == 'any': return True
-        return class_name_lower == self.main_class.current_key or class_name_lower == self.secondary_class.current_key
-
-
-def check_options(world):
-    options = world.options
-    random = world.random
-    settings = world.settings
-    classes = ['fighter', 'mystic', 'bandit']
-
-    if options.main_class.value == options.secondary_class.value:
-        raise_yaml_error(world.player, "You cannot have the same class selected for main_class and secondary_class")
-
-
-def raise_yaml_error(player_name, error):
-    raise OptionError(f'\n\n=== Atlyss YAML ERROR ===\nAtlyss: {player_name} {error}, PLEASE FIX YOUR YAML\n\n')

@@ -29,7 +29,6 @@ class Atlyss(World):
         self.location_count = 0
 
     def generate_early(self):
-        check_options(self)
         options = self.options
         if hasattr(self.multiworld, "re_gen_passthrough"):
             if "Atlyss" not in self.multiworld.re_gen_passthrough: return
@@ -45,12 +44,6 @@ class Atlyss(World):
 
             if "achievements" in passthrough:
                 options.achievements = Achievements(passthrough["achievements"])
-
-            if "main_class" in passthrough:
-                options.main_class = MainClass(passthrough["main_class"])
-
-            if "secondary_class" in passthrough:
-                options.secondary_class = SecondaryClass(passthrough["secondary_class"])
 
             if "experience_multiplier" in passthrough:
                 options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
@@ -138,8 +131,6 @@ class Atlyss(World):
             "random_portals": bool(self.options.random_portals),
             "shop_sanity": bool(self.options.shop_sanity),
             "achievements": bool(self.options.achievements),
-            "main_class": int(self.options.main_class),
-            "secondary_class": int(self.options.secondary_class),
             "experience_multiplier": int(self.options.experience_multiplier)
         }
         return slot_data
