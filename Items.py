@@ -539,19 +539,28 @@ def gen_create_items(world):
 	pool = world.multiworld.itempool
 	options = world.options
 	random = world.random
-	# Class choice was removed from YAML; always place all three class-specific progressive lines so any in-game class works.
-	for item, amt in fighter_progressives.items():
-		world.location_count -= amt
-		for _ in range(amt):
-			pool.append(world.create_item(item))
-	for item, amt in mystic_progressives.items():
-		world.location_count -= amt
-		for _ in range(amt):
-			pool.append(world.create_item(item))
-	for item, amt in bandit_progressives.items():
-		world.location_count -= amt
-		for _ in range(amt):
-			pool.append(world.create_item(item))
+	# Only add "any" progressives if no specific class is selected at all.
+	# If one or two classes are selected, only class-specific items are added instead.
+	if not options.is_class('fighter') and not options.is_class('mystic') and not options.is_class('bandit'):
+		for item, amt in any_progressives.items():
+			world.location_count -= amt
+			for _ in range(amt):
+				pool.append(world.create_item(item))
+	if options.is_class('fighter'):
+		for item, amt in fighter_progressives.items():
+			world.location_count -= amt
+			for _ in range(amt):
+				pool.append(world.create_item(item))
+	if options.is_class('mystic'):
+		for item, amt in mystic_progressives.items():
+			world.location_count -= amt
+			for _ in range(amt):
+				pool.append(world.create_item(item))
+	if options.is_class('bandit'):
+		for item, amt in bandit_progressives.items():
+			world.location_count -= amt
+			for _ in range(amt):
+				pool.append(world.create_item(item))
 	for item, amt in item_counts_useful.items():
 		world.location_count -= amt
 		for _ in range(amt):
