@@ -29,31 +29,38 @@ class Atlyss(World):
         self.location_count = 0
 
     def generate_early(self):
-        check_options(self)
         options = self.options
-        if hasattr(self.multiworld, "re_gen_passthrough"):
-            if "Atlyss" not in self.multiworld.re_gen_passthrough: return
-            passthrough = self.multiworld.re_gen_passthrough["Atlyss"]
-            if "goal" in passthrough:
-                options.goal = Goal(passthrough["goal"])
+        # Universal Tracker sets re_gen_passthrough; apply it before validate_option_errors / check_options.
+        # Vanilla gen never has this attribute, so duplicate main+secondary still errors below.
+        if getattr(self.multiworld, "re_gen_passthrough", None) is not None:
+            if "Atlyss" in self.multiworld.re_gen_passthrough:
+                passthrough = self.multiworld.re_gen_passthrough["Atlyss"]
+                if "goal" in passthrough:
+                    options.goal = Goal(passthrough["goal"])
 
-            if "random_portals" in passthrough:
-                options.random_portals = RandomPortals(passthrough["random_portals"])
+                if "random_portals" in passthrough:
+                    options.random_portals = RandomPortals(passthrough["random_portals"])
 
-            if "shop_sanity" in passthrough:
-                options.shop_sanity = ShopSanity(passthrough["shop_sanity"])
+                if "shop_sanity" in passthrough:
+                    options.shop_sanity = ShopSanity(passthrough["shop_sanity"])
 
-            if "achievements" in passthrough:
-                options.achievements = Achievements(passthrough["achievements"])
+                if "achievements" in passthrough:
+                    options.achievements = Achievements(passthrough["achievements"])
 
-            if "main_class" in passthrough:
-                options.main_class = MainClass(passthrough["main_class"])
+                if "main_class" in passthrough:
+                    options.main_class = MainClass(passthrough["main_class"])
 
-            if "secondary_class" in passthrough:
-                options.secondary_class = SecondaryClass(passthrough["secondary_class"])
+                if "secondary_class" in passthrough:
+                    options.secondary_class = SecondaryClass(passthrough["secondary_class"])
 
-            if "experience_multiplier" in passthrough:
-                options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
+                if "experience_multiplier" in passthrough:
+                    options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
+
+            # UT defaults (and YAML slot edge cases) can leave main == secondary; SecondaryClass.option_none = 3.
+            if options.main_class.value == options.secondary_class.value:
+                options.secondary_class = SecondaryClass(3)
+
+        check_options(self)
 
     def create_regions(self):
         gen_create_regions(self)
