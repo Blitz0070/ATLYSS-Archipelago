@@ -2,6 +2,7 @@ from BaseClasses import Location, Region, Item, ItemClassification, LocationProg
 from .Locations import *
 from .Rules import *
 from .GoalScope import location_in_goal_scope
+from .ProfessionToolData import PROFESSION_TOOL_BUYS
 from .RegionGraph import region_rule
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
@@ -95,6 +96,26 @@ def gen_create_regions(world):
     for name, region_key in professions:
         if _in_scope(world, name, region_key):
             make_location(world, name, region_map[region_key], rule_map)
+
+    menu_region = region_map["Menu"]
+    for loc_name, item_name in PROFESSION_TOOL_BUYS:
+        if not _in_scope(world, loc_name, "Menu"):
+            continue
+        if options.profession_tools.value == 0:
+            location = make_location_adv(
+                world,
+                loc_name,
+                loc_name,
+                world.location_name_to_id[loc_name],
+                menu_region,
+                rule_map,
+            )
+            item_code = world.item_name_to_id[item_name]
+            location.place_locked_item(
+                Item(item_name, ItemClassification.progression, item_code, world.player))
+        else:
+            make_location(world, loc_name, menu_region, rule_map)
+
     for name, region_key in bosses:
         if _in_scope(world, name, region_key):
             make_location(world, name, region_map[region_key], rule_map)
@@ -121,7 +142,8 @@ def make_location(world, location_name, region, rule_map):
 
 def make_event_location(world, location_name_a, location_name_b, item_name, id, region, rule_map):
     location = make_location_adv(world, location_name_a, location_name_b, id, region, rule_map)
-    location.place_locked_item(Item(item_name, ItemClassification.progression, None, world.player))
+    item_code = world.item_name_to_id.get(item_name)
+    location.place_locked_item(Item(item_name, ItemClassification.progression, item_code, world.player))
 
 
 def make_location_adv(world, location_name_a, location_name_b, id, region, rule_map):

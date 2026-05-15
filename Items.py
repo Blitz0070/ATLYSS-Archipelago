@@ -473,6 +473,8 @@ useful_items = [
 
 progression_items = [
 	"Experience Bond",
+	"Fishing Rod",
+	"Pickaxe",
 ]
 
 filler_weights = {

@@ -62,6 +62,10 @@ class Atlyss(World):
                 if "experience_multiplier" in passthrough:
                     options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
 
+                if "profession_tools" in passthrough:
+                    from .Options import ProfessionTools as ProfessionToolsOption
+                    options.profession_tools = ProfessionToolsOption(passthrough["profession_tools"])
+
             # UT defaults (and YAML slot edge cases) can leave main == secondary; SecondaryClass.option_none = 3.
             if options.main_class.value == options.secondary_class.value:
                 options.secondary_class = SecondaryClass(3)
@@ -92,6 +96,7 @@ class Atlyss(World):
             "shop_sanity": bool(self.options.shop_sanity),
             "achievements": bool(self.options.achievements),
             "equipment_progression": int(self.options.equipment_progression),
+            "profession_tools": int(self.options.profession_tools),
             "class_filter": int(self.options.class_filter),
             "main_class": int(self.options.main_class),
             "secondary_class": int(self.options.secondary_class),

@@ -116,6 +116,18 @@ class SecondaryClass(Choice):
     default = 3
 
 
+class ProfessionTools(Choice):
+    """
+    First Fishing Rod / Pickaxe purchase at any merchant sends one global check each.
+    Static: those checks hold the real tools. Pool: first purchase sends the check and a
+    multiworld item instead of the vanilla tool (later buys at any shop are normal).
+    """
+    display_name = "Profession Tools"
+    option_static = 0
+    option_pool = 1
+    default = 0
+
+
 class ExperienceMultiplier(Choice):
     """
 	Experience gain multiplier applied in the Atlyss mod.
@@ -143,6 +155,7 @@ class AtlyssOptions(PerGameCommonOptions):
     shop_sanity: ShopSanity
     achievements: Achievements
     equipment_progression: EquipmentProgression
+    profession_tools: ProfessionTools
     class_filter: ClassFilter
     main_class: MainClass
     secondary_class: SecondaryClass
