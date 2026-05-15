@@ -53,14 +53,44 @@ class Achievements(DefaultOnToggle):
     """
 	Whether in-game achievements are tracked as Archipelago locations.
 	When enabled (default), unlocking achievements such as 'A New Journey',
-	'Trout Master', 'Skill Student', subclass picks, dungeon clears, 'Altered
-	Vision', 'Rude!', etc. sends checks to other players (adds up to 18
-	locations, fewer if a class is unselected).
+	'Trout Master', 'Skill Student', dungeon clears, 'Altered Vision',
+	'Rude!', etc. sends checks to other players (up to 12 locations with
+	goal trim; more without early goals).
 	When disabled, no achievement locations are placed in this slot and the
 	mod will not send their checks during play; pick this for a shorter or
 	more boss/quest-focused run.
-	"""
+    """
     display_name = "Achievements"
+
+
+class ClassFilter(Choice):
+    """
+	Filter random equipment pool by class (weapons/armor affinity).
+	All Classes: no filter. Single/dual class: only matching gear in gated fill.
+	Universal trinkets, consumables, and progression items are never filtered.
+    """
+    display_name = "Class Filter"
+    option_all_classes = 0
+    option_fighter = 1
+    option_mystic = 2
+    option_bandit = 3
+    option_fighter_mystic = 4
+    option_fighter_bandit = 5
+    option_mystic_bandit = 6
+    default = 0
+
+
+class EquipmentProgression(Choice):
+    """
+	How non-progressive equipment is distributed during fill (future).
+	Gated: high-tier gear only at checks reachable at that level (requires item
+	tier metadata — not yet fully wired).
+	Unrestricted: equipment can appear on any check (current behaviour).
+    """
+    display_name = "Equipment Progression"
+    option_gated = 0
+    option_unrestricted = 1
+    default = 1
 
 
 class MainClass(Choice):
@@ -83,6 +113,18 @@ class SecondaryClass(Choice):
     option_bandit = 1
     option_mystic = 2
     option_none = 3
+    default = 3
+
+
+class ProfessionTools(Choice):
+    """
+    First Fishing Rod / Pickaxe purchase at any merchant sends one global check each.
+    Static: those checks hold the real tools. Pool: first purchase sends the check and a
+    multiworld item instead of the vanilla tool (later buys at any shop are normal).
+    """
+    display_name = "Profession Tools"
+    option_static = 0
+    option_pool = 1
     default = 0
 
 
@@ -112,6 +154,9 @@ class AtlyssOptions(PerGameCommonOptions):
     random_portals: RandomPortals
     shop_sanity: ShopSanity
     achievements: Achievements
+    equipment_progression: EquipmentProgression
+    profession_tools: ProfessionTools
+    class_filter: ClassFilter
     main_class: MainClass
     secondary_class: SecondaryClass
     experience_multiplier: ExperienceMultiplier
@@ -128,7 +173,8 @@ def check_options(world):
     settings = world.settings
     classes = ['fighter', 'mystic', 'bandit']
 
-    if options.main_class.value == options.secondary_class.value:
+    if (options.main_class.value == options.secondary_class.value
+            and options.secondary_class.value != 3):
         raise_yaml_error(world.player, "You cannot have the same class selected for main_class and secondary_class")
 
 

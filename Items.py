@@ -1,6 +1,13 @@
 from BaseClasses import ItemClassification
 from .Locations import *
 from .Options import *
+from .ProgressionLogic import (
+    compute_tier_budgets,
+    count_junk_locations,
+    tier_selection_would_overflow,
+)
+from .ItemTiers import get_item_tier
+from .ItemClassAffinity import item_passes_class_filter
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
@@ -86,7 +93,7 @@ filler_items = [
 	"Test Chestpiece",
 	"Vampiric Coat",
 	"Bunhost Leggings",
-	"Festive Trouser",
+	"Festive Trousers",
 	"Noble Pants",
 	"Orefinder",
 	"Ritualist Straps",
@@ -224,7 +231,7 @@ useful_items = [
 	"Serrated Spear",
 	"Sapphite Spear",
 	"Nulrok Spear",
-	"Cyrotribe Spear",
+	"Cryotribe Spear",
 	"Flametribe Spear",
 	"Marrow Bauble",
 	"Splitbark Scepter",
@@ -269,7 +276,7 @@ useful_items = [
 	"Petrified Bow",
 	"Mithril Bow",
 	"Necroroyal Bow",
-	"Colgeist Bow",
+	"Coldgeist Bow",
 	"Serrated Longbow",
 	"Torrentius Longbow",
 	"Amberite Boomstick",
@@ -280,9 +287,9 @@ useful_items = [
 	"Newfold Halo",
 	"Acolyte Hood",
 	"Cryptsinge Halo",
-	"Initial Spectacles",
+	"Initiate Spectacles",
 	"Demicrypt Halo",
-	"Desne Helm",
+	"Dense Helm",
 	"Diva Crown",
 	"Iron Halo",
 	"Necromancer Hood",
@@ -345,7 +352,7 @@ useful_items = [
 	"Slimek Chest",
 	"Dense Chestpiece",
 	"Trodd Tunic",
-	"Iron Chestplate",
+	"Iron Chestpiece",
 	"Tattered Battlerobe",
 	"Apprentice Robe",
 	"Duelist Garb",
@@ -381,7 +388,7 @@ useful_items = [
 	"Gemveil Breastplate",
 	"Roudon Robe",
 	"Ruggrok Vest",
-	"Excecutioner Vestment",
+	"Executioner Vestment",
 	"Fender Garb",
 	"Wizlad Robe",
 	"Aero Pants",
@@ -412,7 +419,7 @@ useful_items = [
 	"Fuguefall Pants",
 	"Magilord Boots",
 	"Sapphite Leggings",
-	"Jadewall Trousers",
+	"Jadewail Trousers",
 	"Temrak Britches",
 	"Eschek Greaves",
 	"Gemveil Leggings",
@@ -436,7 +443,7 @@ useful_items = [
 	"Daemon Shield",
 	"Irisun Shield",
 	"Old Ring",
-	"Ring of Ambition",
+	"Ring Of Ambition",
 	"Test Ring",
 	"Nograd's Amulet",
 	"The One Ring",
@@ -466,6 +473,8 @@ useful_items = [
 
 progression_items = [
 	"Experience Bond",
+	"Fishing Rod",
+	"Pickaxe",
 ]
 
 filler_weights = {
@@ -535,53 +544,111 @@ item_table = {
 
 raw_items = [item for item, classification in item_table.items()]
 
+def _is_filler_item_name(name: str) -> bool:
+	return item_table[name] == ItemClassification.filler
+
+
+def _balance_gated_pool(world, pool, max_non_filler: int, junk_count: int,
+                        filler_names, filler_weightings, random) -> None:
+	"""Ensure junk slots can receive filler and cap optional useful items."""
+	player = world.player
+	replaceable = [
+		i for i in pool
+		if i.player == player
+		and i.classification not in (ItemClassification.progression, ItemClassification.filler)
+	]
+
+	def filler_count() -> int:
+		return sum(
+			1 for i in pool
+			if i.player == player and i.classification == ItemClassification.filler
+		)
+
+	while len(replaceable) > max_non_filler or filler_count() < junk_count:
+		if not replaceable:
+			break
+		item = replaceable.pop()
+		idx = pool.index(item)
+		pool[idx] = world.create_item(random.choices(filler_names, filler_weightings)[0])
+
+
 def gen_create_items(world):
 	pool = world.multiworld.itempool
 	options = world.options
 	random = world.random
-	# Only add "any" progressives if no specific class is selected at all.
-	# If one or two classes are selected, only class-specific items are added instead.
+	gated = options.equipment_progression.value == 0
+	class_filter = options.class_filter.value
+	total_locations = world.location_count
+	junk_count = count_junk_locations(world) if gated else 0
+	max_non_filler = total_locations - junk_count if gated else total_locations
+	non_filler_count = 0
+
+	def _append_item(name: str, *, required: bool = False) -> None:
+		nonlocal non_filler_count
+		if not required and world.location_count <= 0:
+			return
+		is_filler = _is_filler_item_name(name)
+		if gated and not is_filler and not required and non_filler_count >= max_non_filler:
+			return
+		pool.append(world.create_item(name))
+		world.location_count -= 1
+		if not is_filler:
+			non_filler_count += 1
+
+	filler_item_names = [key for key, value in filler_weights.items()]
+	filler_weightings = [value for key, value in filler_weights.items()]
+
 	if not options.is_class('fighter') and not options.is_class('mystic') and not options.is_class('bandit'):
 		for item, amt in any_progressives.items():
-			world.location_count -= amt
 			for _ in range(amt):
-				pool.append(world.create_item(item))
+				_append_item(item, required=True)
 	if options.is_class('fighter'):
 		for item, amt in fighter_progressives.items():
-			world.location_count -= amt
 			for _ in range(amt):
-				pool.append(world.create_item(item))
+				_append_item(item, required=True)
 	if options.is_class('mystic'):
 		for item, amt in mystic_progressives.items():
-			world.location_count -= amt
 			for _ in range(amt):
-				pool.append(world.create_item(item))
+				_append_item(item, required=True)
 	if options.is_class('bandit'):
 		for item, amt in bandit_progressives.items():
-			world.location_count -= amt
 			for _ in range(amt):
-				pool.append(world.create_item(item))
+				_append_item(item, required=True)
 	for item, amt in item_counts_useful.items():
-		world.location_count -= amt
 		for _ in range(amt):
-			pool.append(world.create_item(item))
+			_append_item(item)
 	for item, amt in item_counts_filler.items():
-		world.location_count -= amt
 		for _ in range(amt):
-			pool.append(world.create_item(item))
+			_append_item(item)
 	for item, amt in item_counts_progression.items():
-		world.location_count -= amt
 		for _ in range(amt):
-			pool.append(world.create_item(item))
+			_append_item(item, required=True)
 	if options.random_portals:
 		for item in portals:
-			world.location_count -= 1
-			pool.append(world.create_item(item))
+			_append_item(item, required=True)
 	else:
 		for _ in range(11):
-			world.location_count -= 1
-			pool.append(world.create_item("Progressive Portal"))
-	filler_items = [key for key, value in filler_weights.items()]
-	filler_weightings = [value for key, value in filler_weights.items()]
+			_append_item("Progressive Portal", required=True)
+
+	if gated and world.location_count > 0:
+		tier_budgets = compute_tier_budgets(world)
+		tier_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+		candidates = list(useful_items)
+		random.shuffle(candidates)
+		for item_name in candidates:
+			if world.location_count <= 0 or non_filler_count >= max_non_filler:
+				break
+			if not item_passes_class_filter(class_filter, item_name):
+				continue
+			tier = get_item_tier(item_name)
+			if tier is not None and tier_selection_would_overflow(tier, tier_counts, tier_budgets):
+				continue
+			if tier is not None:
+				tier_counts[tier] += 1
+			_append_item(item_name)
+
+	if gated:
+		_balance_gated_pool(world, pool, max_non_filler, junk_count, filler_item_names, filler_weightings, random)
+
 	for _ in range(world.location_count):
-		pool.append(world.create_item(random.choices(filler_items, filler_weightings)[0]))
+		pool.append(world.create_item(random.choices(filler_item_names, filler_weightings)[0]))

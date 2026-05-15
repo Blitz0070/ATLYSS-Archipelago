@@ -192,13 +192,18 @@ bosses = [
 	["Galius", "Bularr Fortress"]
 ]
 
+from .ProfessionToolData import PROFESSION_TOOL_BUYS
+
+profession_tool_buys = [[location_name, "Menu"] for location_name, _ in PROFESSION_TOOL_BUYS]
+
 location_dict = [
 	*[items[0] for items in quests],
 	*[items[0] for items in levels],
 	*[items[0] for items in merchants],
 	*[items[0] for items in professions],
 	*[items[0] for items in achievements],
-	*[items[0] for items in bosses]
+	*[items[0] for items in bosses],
+	*[items[0] for items in profession_tool_buys],
 ]
 
 location_grind_data = [
