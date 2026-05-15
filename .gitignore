@@ -3,3 +3,6 @@ __pycache__/
 *.py[codz]
 *$py.class
 .idea/
+docs/
+player_options/
+scripts/
