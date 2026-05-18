@@ -5,7 +5,7 @@ Omit checks beyond the selected victory condition so generation does not place
 items on locations the player would never need for that goal (e.g. Slime Diva
 drops late bosses, grove merchants, and high level milestones).
 
-Min-level gates are parsed from Rules.py so this stays aligned with access rules.
+Quest min-levels come from QuestAccess.QUEST_ACCESS; other checks parsed from Rules.py.
 """
 from __future__ import annotations
 
@@ -74,7 +74,14 @@ def _parse_min_grind_levels_from_rules(rules_text: str) -> Dict[str, int]:
 def _get_location_min_grind_levels() -> Dict[str, int]:
     global _location_min_grind_levels
     if _location_min_grind_levels is None:
-        _location_min_grind_levels = _parse_min_grind_levels_from_rules(_load_rules_source())
+        from .QuestAccess import QUEST_ACCESS
+
+        levels = {name: level for name, (level, _after, _gate) in QUEST_ACCESS.items()}
+        parsed = _parse_min_grind_levels_from_rules(_load_rules_source())
+        for name, level in parsed.items():
+            if name not in levels or level < levels[name]:
+                levels[name] = level
+        _location_min_grind_levels = levels
     return _location_min_grind_levels
 
 

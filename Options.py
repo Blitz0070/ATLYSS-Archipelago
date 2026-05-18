@@ -36,7 +36,7 @@ class RandomPortals(Toggle):
 	Off (default): Progressive Portals - find "Progressive Portal" items to unlock
 	areas in a fixed sequence. Each portal found opens the next area in order.
 	On: Random Portals - find individual portal items (e.g. "Outer Sanctum Portal",
-	"Catacombs Portal") to unlock specific areas independently.
+	"Sanctum Catacombs lvl 1 Portal", etc.) to unlock specific areas and dungeon floors independently.
 	"""
     display_name = "Random Portals"
 

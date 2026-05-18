@@ -47,7 +47,7 @@ def gen_create_regions(world):
     region_map["Outer Sanctum"].connect(region_map["Arcwood Pass"], rule=region_rule(player, "Arcwood Pass"))
     region_map["Outer Sanctum"].connect(
         region_map["Effold Terrace"],
-        rule=region_rule(player, "Effold Terrace", lambda s: has_quest(s, player, "Diva Must Die")),
+        rule=region_rule(player, "Effold Terrace", lambda s: has_quest(s, player, "Communing Catacombs")),
     )
     region_map["Outer Sanctum"].connect(region_map["Tuul Valley"], rule=region_rule(player, "Tuul Valley"))
     region_map["Arcwood Pass"].connect(

@@ -520,7 +520,9 @@ portals = [
 	"Arcwood Pass Portal",
 	"Effold Terrace Portal",
 	"Tuul Valley Portal",
-	"Catacombs Portal",
+	"Sanctum Catacombs lvl 1 Portal",
+	"Sanctum Catacombs lvl 2 Portal",
+	"Sanctum Catacombs lvl 3 Portal",
 	"Cresent Road Portal",
 	"Tuul Enclave Portal",
 	"Luvora Garden Portal",
@@ -627,7 +629,7 @@ def gen_create_items(world):
 		for item in portals:
 			_append_item(item, required=True)
 	else:
-		for _ in range(11):
+		for _ in range(14):
 			_append_item("Progressive Portal", required=True)
 
 	if gated and world.location_count > 0:

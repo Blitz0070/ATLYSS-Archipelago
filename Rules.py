@@ -1,7 +1,34 @@
 import math
 from .Locations import *
+from .QuestAccess import get_quest_rule_map
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
+
+# =============================================================================
+# Portal access (YAML: random_portals) — used by region routes and QuestAccess.py
+#
+# Progressive unlock order:
+#   1 Outer  2 Arcwood  3–5 Catacombs lvl 1–3  6 Effold  7 Tuul  8 Road
+#   9 Luvora  10 Keep  11 Enclave  12 Grove lvl 1  13 Grove lvl 2  14 Bularr
+# =============================================================================
+
+def _use_random_portals(state, player) -> bool:
+    return state.multiworld.worlds[player].options.random_portals
+
+
+def has_named_portals(state, player, portal_items: tuple) -> bool:
+    return all(state.has(portal, player, 1) for portal in portal_items)
+
+
+def has_progressive_portals(state, player, unlock_count: int) -> bool:
+    return state.has("Progressive Portal", player, unlock_count)
+
+
+def has_portal_access(state, player, random_portal_items: tuple, progressive_unlock_count: int) -> bool:
+    if _use_random_portals(state, player):
+        return has_named_portals(state, player, random_portal_items)
+    return has_progressive_portals(state, player, progressive_unlock_count)
+
 
 def has_fishing_tool_for_logic(state, player) -> bool:
     return state.has("Fishing Rod", player, 1)
@@ -12,125 +39,9 @@ def has_mining_tool_for_logic(state, player) -> bool:
 
 
 def get_rule_map(player):
-    return {
-        "A Warm Welcome": lambda state: can_grind_level(state, player, 1),
-        "Communing Catacombs": lambda state: can_grind_level(state, player, 1) and has_quest(state, player,
-                                                                                             "A Warm Welcome")
-        and has_catacombs_route(state, player),
-        "Diva Must Die": lambda state: can_grind_level(state, player, 4) and has_quest(state, player,
-                                                                                       "Communing Catacombs"),
-        "The Keep Within": lambda state: can_grind_level(state, player, 8) and has_quest(state, player,
-                                                                                         "Diva Must Die"),
-        "Tethering Grove": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                          "The Keep Within")
-        and has_grove_colossus_route(state, player),
-        "The Glyphik Booklet": lambda state: can_grind_level(state, player, 24) and has_quest(state, player,
-                                                                                              "Finding Ammagon")
-        and has_portal_route(state, player, ("Luvora Garden", "Tuul Enclave", "Cresent Grove lvl 2")),
-        "Cleaning Terrace": lambda state: can_grind_level(state, player, 5) and has_quest(state, player,
-                                                                                          "Diva Must Die")
-        and has_effold_route(state, player),
-        "Ancient Beings": lambda state: can_grind_level(state, player, 8) and has_quest(state, player,
-                                                                                        "The Keep Within")
-        and has_crescent_road_keep_route(state, player),
-        "Wicked Wizboars": lambda state: can_grind_level(state, player, 10) and has_tuul_valley_route(state, player),
-        "Spiraling In The Grove": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                                 "Tethering Grove")
-        and has_grove_colossus_route(state, player),
-        "Hell In The Grove": lambda state: can_grind_level(state, player, 20) and has_quest(state, player,
-                                                                                            "Tethering Grove")
-        and has_portal_route(state, player, ("Cresent Grove lvl 1", "Cresent Grove lvl 2")),
-        "Nulversa Magica": lambda state: can_grind_level(state, player, 20),
-        "Finding Ammagon": lambda state: can_grind_level(state, player, 14) and has_bularr_route(state, player),
-        "The Colossus": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                       "The Keep Within")
-        and has_grove_colossus_route(state, player),
-        "Night Spirits": lambda state: can_grind_level(state, player, 1) and has_arcwood_route(state, player),
-        "Ridding Slimes": lambda state: can_grind_level(state, player, 1) and has_outer_sanctum_route(state, player),
-        "Huntin' Hogs": lambda state: can_grind_level(state, player, 7) and has_tuul_valley_route(state, player),
-        "Purging the Grove": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                            "The Colossus")
-        and has_grove_colossus_route(state, player),
-        "Cleansing the Grove": lambda state: can_grind_level(state, player, 20) and has_quest(state, player,
-                                                                                              "The Colossus")
-        and has_portal_route(state, player, ("Cresent Grove lvl 1", "Cresent Grove lvl 2")),
-        "Nulversa Viscera": lambda state: can_grind_level(state, player, 20),
-        "Call of Fury": lambda state: can_grind_level(state, player, 4) and has_outer_sanctum_route(state, player),
-        "Mastery of Strength": lambda state: can_grind_level(state, player, 10),
-        "Beckoning Foes": lambda state: can_grind_level(state, player, 12),
-        "Ghostly Goods": lambda state: can_grind_level(state, player, 1) and has_quest(state, player,
-                                                                                       "A Warm Welcome")
-        and has_catacombs_route(state, player),
-        "Makin' a Mekspear": lambda state: can_grind_level(state, player, 7) and has_mekspear_route(state, player),
-        "Makin' a Wizwand": lambda state: can_grind_level(state, player, 10) and has_wizwand_route(state, player),
-        "Makin' a Vile Blade": lambda state: can_grind_level(state, player, 10) and has_vile_blade_route(state, player),
-        "Makin' a Golem Chestpiece": lambda state: can_grind_level(state, player, 12) and has_quest(state, player,
-                                                                                                    "The Keep Within")
-        and has_golem_chest_route(state, player),
-        "Makin' a Ragespear": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                             "Makin' a Mekspear")
-        and has_ragespear_route(state, player),
-        "Makin' a Monolith Chestpiece": lambda state: can_grind_level(state, player, 16) and has_quest(state, player,
-                                                                                                       "Makin' a Golem Chestpiece"),
-        "Makin' a Firebreath Blade": lambda state: can_grind_level(state, player, 20),
-        "Makin' a Follycannon": lambda state: can_grind_level(state, player, 24),
-        "Summore' Spectral Powder!": lambda state: can_grind_level(state, player, 1) and has_quest(state, player,
-                                                                                                   "Ghostly Goods")
-        and has_catacombs_route(state, player),
-        "Makin' More Mekspears": lambda state: can_grind_level(state, player, 7) and has_quest(state, player,
-                                                                                               "Makin' a Mekspear")
-        and has_mekspear_route(state, player),
-        "Makin' More Wizwands": lambda state: can_grind_level(state, player, 10) and has_quest(state, player,
-                                                                                               "Makin' a Wizwand")
-        and has_wizwand_route(state, player),
-        "Makin' More Vile Blades": lambda state: can_grind_level(state, player, 10) and has_quest(state, player,
-                                                                                                  "Makin' a Vile Blade")
-        and has_vile_blade_route(state, player),
-        "Summore' Golem Chestpieces": lambda state: can_grind_level(state, player, 12) and has_quest(state, player,
-                                                                                                     "Makin' a Golem Chestpiece")
-        and has_golem_chest_route(state, player),
-        "Makin' More Ragespears": lambda state: can_grind_level(state, player, 15) and has_quest(state, player,
-                                                                                                 "Makin' a Ragespear")
-        and has_ragespear_route(state, player),
-        "Summore' Monolith Chestpieces": lambda state: can_grind_level(state, player, 16) and has_quest(state, player,
-                                                                                                        "Makin' a Monolith Chestpiece"),
-        "Nulversa, Greenversa!": lambda state: can_grind_level(state, player, 20),
-        "Summore' Firebreath Blades": lambda state: can_grind_level(state, player, 20) and has_quest(state, player,
-                                                                                                     "Makin' a Firebreath Blade"),
-        "Makin' More Follycannons": lambda state: can_grind_level(state, player, 24) and has_quest(state, player,
-                                                                                                   "Makin' a Follycannon"),
-        "Focusin' in": lambda state: can_grind_level(state, player, 4) and has_outer_sanctum_route(state, player),
-        "Mastery of Dexterity": lambda state: can_grind_level(state, player, 10),
-        "Whatta' Rush!": lambda state: can_grind_level(state, player, 12),
-        "The Voice of Zuulneruda": lambda state: can_grind_level(state, player, 6) and has_quest(state, player,
-                                                                                                 "Killing Tomb"),
-        "Killing Tomb": lambda state: can_grind_level(state, player, 1) and has_catacombs_route(state, player),
-        "Purging the Undead": lambda state: can_grind_level(state, player, 6) and has_quest(state, player,
-                                                                                            "Killing Tomb")
-        and has_catacombs_route(state, player),
-        "Rattlecage Rage": lambda state: can_grind_level(state, player, 6) and has_quest(state, player, "Killing Tomb")
-        and has_catacombs_route(state, player),
-        "Consumed Madness": lambda state: can_grind_level(state, player, 12) and has_quest(state, player,
-                                                                                           "The Voice of Zuulneruda")
-        and has_catacombs_route(state, player),
-        "Eradicating the Undead": lambda state: can_grind_level(state, player, 12) and has_quest(state, player,
-                                                                                                 "The Voice of Zuulneruda")
-        and has_catacombs_route(state, player),
-        "Reviling the Rageboars": lambda state: can_grind_level(state, player, 14) and has_bularr_route(state, player),
-        "Gatling Galius": lambda state: can_grind_level(state, player, 22),
-        "Reviling more Rageboars": lambda state: can_grind_level(state, player, 14) and has_quest(state, player,
-                                                                                                  "Reviling the Rageboars")
-        and has_bularr_route(state, player),
-        "Facing Foes": lambda state: can_grind_level(state, player, 18),
-        "The Gall of Galius": lambda state: can_grind_level(state, player, 22) and has_quest(state, player,
-                                                                                             "Gatling Galius"),
-        "Dense Ingots": lambda state: can_grind_level(state, player, 1) and has_arcwood_route(state, player),
-        "Amberite Ingots": lambda state: can_grind_level(state, player, 6) and has_quest(state, player,
-                                                                                         "Dense Ingots")
-        and has_tuul_valley_route(state, player),
-        "Sapphite Ingots": lambda state: can_grind_level(state, player, 8) and has_quest(state, player,
-                                                                                         "Amberite Ingots")
-        and has_tuul_enclave_route(state, player),
+    rules = get_quest_rule_map()
+    rules.update({
+        # ----- Level milestones -----
         "Reach Level 2": lambda state: can_grind_level(state, player, 2),
         "Reach Level 4": lambda state: can_grind_level(state, player, 4),
         "Reach Level 6": lambda state: can_grind_level(state, player, 6),
@@ -147,6 +58,7 @@ def get_rule_map(player):
         "Reach Level 28": lambda state: can_grind_level(state, player, 28),
         "Reach Level 30": lambda state: can_grind_level(state, player, 30),
         "Reach Level 32": lambda state: can_grind_level(state, player, 32),
+        # ----- Shops -----
         "Buy Item #1 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
         "Buy Item #2 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
         "Buy Item #3 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
@@ -204,6 +116,7 @@ def get_rule_map(player):
         "Buy Item #5 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
         "Buy Fishing Rod": lambda state: has_area(state, player, "Sanctum"),
         "Buy Pickaxe": lambda state: has_area(state, player, "Sanctum"),
+        # ----- Professions -----
         "Fishing Lv. 1": lambda state: can_grind_fish(state, player, 1)
         and has_fishing_tool_for_logic(state, player),
         "Fishing Lv. 2": lambda state: can_grind_fish(state, player, 2)
@@ -244,6 +157,7 @@ def get_rule_map(player):
         and has_mining_tool_for_logic(state, player),
         "Mining Lv. 10": lambda state: can_grind_mine(state, player, 10) and has_mining_high_route(state, player)
         and has_mining_tool_for_logic(state, player),
+        # ----- Achievements -----
         "A New Journey": lambda state: can_grind_level(state, player, 0),
         "Clearing Catacombs (1-6)": lambda state: can_grind_level(state, player, 1) and has_area(state, player,
                                                                                                  "Sanctum Catacombs lvl 1"),
@@ -270,20 +184,29 @@ def get_rule_map(player):
         "Fashion Sense": lambda state: can_grind_level(state, player, 0),
         "Trout Master": lambda state: can_grind_fish(state, player, 10),
         "Skill Student": lambda state: can_grind_level(state, player, 10),
+        # ----- Boss checks -----
         "Slime Diva": lambda state: can_beat_enemy(state, player, "Slime Diva"),
         "Lord Zuulneruda": lambda state: can_beat_enemy(state, player, "Lord Zuulneruda"),
         "Lord Kaluuz": lambda state: can_beat_enemy(state, player, "Lord Kaluuz"),
         "Colossus": lambda state: can_beat_enemy(state, player, "Colossus"),
         "Valdur": lambda state: can_beat_enemy(state, player, "Valdur"),
         "Galius": lambda state: can_beat_enemy(state, player, "Galius"),
-    }
+    })
+    return rules
 
+
+# =============================================================================
+# Region / route helpers (area names → portal_counts or named portal items)
+# =============================================================================
 
 def has_area(state, player, area) -> bool:
     if not state.multiworld.worlds[player].options.random_portals:
         return state.has("Progressive Portal", player, portal_counts[area])
-    if area.startswith("Sanctum Catacombs"):
-        area = "Catacombs"
+    if area == "Cresent Grove lvl 2":
+        return (
+            state.has("Cresent Grove lvl 1 Portal", player, 1)
+            and state.has("Cresent Grove lvl 2 Portal", player, 1)
+        )
     portal = f"{area} Portal"
     return state.has(portal, player, 1)
 
@@ -418,6 +341,10 @@ def has_quest(state, player, quest) -> bool:
     return state.has(f"Complete: {quest}", player, 1)
 
 
+# =============================================================================
+# Level grind + boss access
+# =============================================================================
+
 def can_grind(state, player, level, area_data) -> bool:
     if level > 30: return can_grind(state, player, 30, area_data)
     if level <= 1: return True
@@ -448,7 +375,8 @@ def can_beat_enemy(state, player, enemy_name) -> bool:
     if not areas:
         return True
     if all(a.startswith("Sanctum Catacombs") for a in areas):
-        return has_catacombs_route(state, player)
+        route = ("Outer Sanctum", "Arcwood Pass") + tuple(areas)
+        return has_portal_route(state, player, route)
     if areas == ["Effold Terrace"]:
         return has_effold_route(state, player)
     if areas == ["Cresent Grove lvl 1"]:
