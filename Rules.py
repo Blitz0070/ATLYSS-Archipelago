@@ -43,6 +43,62 @@ def has_mining_tool_for_logic(state, player) -> bool:
     return state.has("Pickaxe", player, 1)
 
 
+_SHOP_SLOT_LEVELS = (4, 8, 12, 16, 20)
+
+_SHOP_MERCHANT_AREA = {
+    "Sally's Nook": "Sanctum",
+    "Skrit's Sikrit Market": "Sanctum",
+    "Dye Merchant": "Sanctum",
+    "Ruka's Furnace": "Sanctum",
+    "Torta's Fishing Shack": "Sanctum",
+    "Mad Statue's Gift": "Sanctum",
+}
+
+_SHOP_MERCHANT_GATE = {
+    "Frankie's Goods": "arcwood_pass",
+    "Tesh's Wares": "sanctum_catacombs_f2",
+    "Nesh's Wares": "sanctum_catacombs_f3",
+    "Rikko's Treasures": "crescent_grove_colossus",
+    "Cotoo's Treasures": "crescent_grove_lvl2",
+}
+
+
+def has_shop_access(state, player, merchant: str) -> bool:
+    gate_id = _SHOP_MERCHANT_GATE.get(merchant)
+    if gate_id is not None:
+        return has_portal_gate(state, player, gate_id)
+    area = _SHOP_MERCHANT_AREA.get(merchant)
+    if area is not None:
+        return has_area(state, player, area)
+    return False
+
+
+def _shop_slot_min_level(merchant: str, slot: int) -> int:
+    if merchant == "Sally's Nook" and slot == 1:
+        return 1
+    return _SHOP_SLOT_LEVELS[slot - 1]
+
+
+def has_shop_slot_progress(state, player, merchant: str, slot: int) -> bool:
+    return (
+        has_shop_access(state, player, merchant)
+        and can_grind_level(state, player, _shop_slot_min_level(merchant, slot))
+    )
+
+
+def apply_shop_slot_rules(rules: dict, player) -> None:
+    for location_name, _region_name in merchants:
+        prefix = "Buy Item #"
+        marker = " from "
+        if not location_name.startswith(prefix) or marker not in location_name:
+            continue
+        slot_text, merchant = location_name[len(prefix):].split(marker, 1)
+        slot = int(slot_text)
+        rules[location_name] = (
+            lambda state, merchant=merchant, slot=slot: has_shop_slot_progress(state, player, merchant, slot)
+        )
+
+
 def get_rule_map(player):
     rules = get_quest_rule_map(player)
     rules.update({
@@ -194,6 +250,7 @@ def get_rule_map(player):
         "Valdur": lambda state: can_beat_enemy(state, player, "Valdur"),
         "Galius": lambda state: can_beat_enemy(state, player, "Galius"),
     })
+    apply_shop_slot_rules(rules, player)
     return rules
 
 
