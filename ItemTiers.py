@@ -1,282 +1,205 @@
-"""Per-item equipment tiers for gated fill (from Improved-Logic fork)."""
+"""Equipment metadata for gated fill and class filtering."""
 from __future__ import annotations
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-ITEM_TIER: Dict[str, int] = {
-    "Acolyte Hood": 1,
-    "Aero Pants": 1,
-    "Aero Top": 1,
-    "Agility Ears": 1,
-    "Amberite Boomstick": 3,
-    "Amberite Breastplate": 3,
-    "Amberite Halberd": 3,
-    "Amberite Helm": 3,
-    "Amberite Leggings": 3,
-    "Amberite Shield": 3,
-    "Amberite Sword": 3,
-    "Amberite Warstar": 3,
-    "Ambersquire Ring": 2,
-    "Apprentice Robe": 2,
-    "Aquapetal Staff": 4,
-    "Berserker Chestpiece": 4,
-    "Berserker Leggings": 4,
-    "Blueversa Cape": 4,
-    "Boarus Helm": 5,
-    "Boarus Torment": 5,
-    "Carbuncle Hat": 4,
-    "Carbuncle Robe": 4,
-    "Chainmail Guard": 3,
-    "Chainmail Leggings": 3,
-    "Chainscale Chest": 4,
-    "Cobblerage Cloak": 4,
-    "Coldgeist Blade": 4,
-    "Coldgeist Frostcaller": 4,
-    "Coldgeist Punisher": 4,
-    "Colossus Tone": 4,
-    "Cozy Cloak": 3,
-    "Cryo Cane": 2,
-    "Crypt Blade": 1,
-    "Crypt Bow": 1,
-    "Crypt Buckler": 1,
-    "Crypt Pounder": 2,
-    "Cryptcall Bell": 2,
-    "Cryptsinge Chest": 1,
-    "Cryptsinge Halberd": 2,
-    "Cryptsinge Halo": 1,
-    "Cryptsinge Katars": 1,
-    "Cryotribe Spear": 5,
-    "Daemon Shield": 5,
-    "Darkcloth Pants": 3,
-    "Dawn Mace": 2,
-    "Deathgel Shivs": 2,
-    "Deathknight Helm": 5,
-    "Deathknight Runeblade": 5,
-    "Deathward Cape": 4,
-    "Demicrypt Bauble": 2,
-    "Demicrypt Blade": 2,
-    "Demicrypt Bow": 2,
-    "Demicrypt Buckler": 2,
-    "Demicrypt Halo": 2,
-    "Dense Chestpiece": 2,
-    "Dense Hammer": 2,
-    "Dense Katars": 2,
-    "Dense Leggings": 2,
-    "Dense Mace": 2,
-    "Dense Shield": 2,
-    "Dense Spear": 2,
-    "Dire Helm": 5,
-    "Diva Crown": 2,
-    "Dolkin's Axe": 3,
-    "Druidic Halo": 5,
-    "Druidic Robe": 4,
-    "Duelist Garb": 2,
-    "Earthbind Tabard": 5,
-    "Earthwoken Ring": 4,
-    "Edon's Pendant": 2,
-    "Emeraldfocus Ring": 2,
-    "Emerock Chestpiece": 4,
-    "Emerock Halo": 5,
-    "Eschek Greaves": 5,
-    "Executioner Leggings": 5,
-    "Executioner Vestment": 5,
-    "Femur Club": 1,
-    "Fender Garb": 5,
-    "Fender Leggings": 5,
-    "Fier Blade": 5,
-    "Firebreath Blade": 5,
-    "Flamepetal Staff": 4,
-    "Flametribe Spear": 5,
-    "Flux Cloak": 3,
-    "Focus Circlet": 3,
-    "Focusi Glasses": 3,
-    "Follycannon": 5,
-    "Forlorn Cloak": 4,
-    "Frostbite Claws": 4,
-    "Fuguefall Duster": 4,
-    "Fuguefall Pants": 4,
-    "Geist Scythe": 2,
-    "Geistlord Band": 4,
-    "Geistlord Claws": 3,
-    "Geistlord Crown": 2,
-    "Geistlord Eye": 4,
-    "Geistlord Ring": 3,
-    "Gemveil Breastplate": 5,
-    "Gemveil Leggings": 5,
-    "Gemveil Raiment": 4,
-    "Ghostly Legwraps": 1,
-    "Ghostly Tabard": 1,
-    "Gilded Sword": 1,
-    "Glyphgrift Halo": 4,
-    "Glyphik Booklet": 5,
-    "Golem Chestpiece": 3,
-    "Golemfist Katars": 4,
-    "Greenversa Cape": 4,
-    "Guardel Helm": 5,
-    "Hellsludge Shivs": 3,
-    "Initiate Cloak": 1,
-    "Iris Shield": 2,
-    "Irisun Shield": 5,
-    "Iron Axehammer": 2,
-    "Iron Bell": 2,
-    "Iron Bow": 2,
-    "Iron Halo": 2,
-    "Iron Katars": 2,
-    "Iron Scepter": 2,
-    "Iron Shield": 2,
-    "Iron Spear": 2,
-    "Iron Sword": 2,
-    "Ironbark Sword": 1,
-    "Jadetrout Ring": 4,
-    "Jestercast Memory": 4,
-    "Journeyman Leggings": 1,
-    "Journeyman Shorts": 1,
-    "Journeyman Spectacles": 2,
-    "Journeyman Vest": 1,
-    "King Breastplate": 4,
-    "King Greaves": 4,
-    "Knightguard Halo": 4,
-    "Leathen Cap": 5,
-    "Leather Britches": 1,
-    "Leather Cap": 1,
-    "Leather Top": 1,
-    "Lord Breastplate": 3,
-    "Lord Greaves": 3,
-    "Magilord Boots": 4,
-    "Magilord Overalls": 4,
-    "Magistrate Circlet": 3,
-    "Magitek Burstgun": 4,
-    "Marrow Bauble": 1,
-    "Mekspear": 2,
-    "Mekspike Bow": 2,
-    "Mekwar Drape": 5,
-    "Menace Bow": 2,
-    "Mercenary Leggings": 4,
-    "Mercenary Vestment": 4,
-    "Meshlink Cape": 4,
-    "Mini Geist Scythe": 1,
-    "Mithril Bell": 4,
-    "Mithril Bow": 3,
-    "Mithril Chestpiece": 4,
-    "Mithril Greatsword": 4,
-    "Mithril Halberd": 4,
-    "Mithril Halo": 4,
-    "Mithril Katars": 3,
-    "Mithril Scepter": 4,
-    "Mithril Shield": 3,
-    "Mithril Sword": 4,
-    "Monolith Chestpiece": 4,
-    "Necro Caustics": 1,
-    "Necro Marrow": 1,
-    "Necromancer Hood": 2,
-    "Necroroyal Bow": 3,
-    "Necroroyal Halberd": 3,
-    "Nethercrypt Bauble": 3,
-    "Nethercrypt Blade": 3,
-    "Nethercrypt Cloak": 3,
-    "Nethercrypt Halo": 3,
-    "Nethercrypt Shield": 3,
-    "Nethercrypt Tabard": 3,
-    "Newfold Halo": 1,
-    "Nograd's Amulet": 1,
-    "Noji Talisman": 4,
-    "Nokket Cloak": 2,
-    "Nulrok Mace": 4,
-    "Nulrok Spear": 4,
-    "Nulversa Cape": 4,
-    "Nutso Pants": 1,
-    "Nutso Top": 1,
-    "Old Ring": 1,
-    "Omen Shield": 2,
-    "Orbos Ring": 4,
-    "Ornamented Battlerobe": 3,
-    "Pearlpond Ring": 3,
-    "Petrified Bow": 3,
-    "Poacher Cloth": 1,
-    "Poltergeist Scythe": 3,
-    "Pyre Cane": 3,
-    "Quake Pummeler": 4,
-    "Rage Circlet": 3,
-    "Ragespear": 4,
-    "Ragged Shirt": 1,
-    "Reaper Gi": 4,
-    "Reaper Leggings": 4,
-    "Reapsow Garb": 3,
-    "Reapsow Pants": 3,
-    "Redversa Cape": 4,
-    "Regazuul Cape": 2,
-    "Rigor Buckler": 4,
-    "Roudon Cape": 4,
-    "Roudon Chestpiece": 4,
-    "Roudon Robe": 5,
-    "Rude Blade": 2,
-    "Rugged Cloak": 2,
-    "Ruggrok Vest": 5,
-    "Rummok Bladerings": 4,
-    "Runic Katars": 2,
-    "Rustweary Shield": 4,
-    "Rustwise Shield": 4,
-    "Ryzer Greataxe": 5,
-    "Sagecaller Cape": 4,
-    "Sagecloth Shorts": 1,
-    "Sagecloth Top": 1,
-    "Sapphireweave Ring": 2,
-    "Sapphite Bell": 4,
-    "Sapphite Guard": 4,
-    "Sapphite Katars": 4,
-    "Sapphite Leggings": 4,
-    "Sapphite Mindhat": 4,
-    "Sapphite Scepter": 4,
-    "Sapphite Shield": 4,
-    "Sapphite Spear": 4,
-    "Sash Leggings": 2,
-    "Serrated Blade": 4,
-    "Serrated Knuckles": 4,
-    "Serrated Longbow": 4,
-    "Serrated Spear": 4,
-    "Sinner Bardiche": 3,
-    "Skywrill Tabard": 2,
-    "Slabton Shield": 3,
-    "Sleeper's Robe": 2,
-    "Slime Diva Baton": 2,
-    "Slimecrust Blade": 1,
-    "Slimecrust Chest": 1,
-    "Slimecrust Katars": 1,
-    "Slimecrust Leggings": 1,
-    "Slimek Axehammer": 1,
-    "Slimek Chest": 1,
-    "Slimek Leggings": 1,
-    "Slimek Shield": 1,
-    "Slimek Shivs": 1,
-    "Slimewoven Cloak": 1,
-    "Slitherwraith Ring": 3,
-    "Splitbark Club": 1,
-    "Splitbark Scepter": 1,
-    "Stone Greatblade": 2,
-    "Stridebond Pants": 4,
-    "Students Ring": 3,
-    "Tattered Battlerobe": 2,
-    "Temrak Britches": 4,
-    "Tessellated Drive": 5,
-    "The One Ring": 1,
-    "Torrentius Longbow": 5,
-    "Trodd Tunic": 2,
-    "Valdur Blade": 5,
-    "Valdur Effigy": 5,
-    "Valor Ring": 4,
-    "Vile Blade": 2,
-    "Voalstark Wand": 5,
-    "Warrior Chest": 2,
-    "Warrior Leggings": 2,
-    "Windgolem Cloak": 5,
-    "Witchlock Loincloth": 3,
-    "Witchlock Robe": 3,
-    "Witchwizard Garterbelt": 4,
-    "Witchwizard Robe": 4,
-    "Wizlad Hood": 5,
-    "Wizlad Robe": 5,
-    "Wizwand": 3,
-    "Worn Robe": 1,
+# class group -> item type -> tier -> item names
+ITEM_DATA: Dict[str, Dict[str, Dict[int, Tuple[str, ...]]]] = {
+    # Universal / no class filter
+    'universal': {
+        # Helmet
+        'helmet': {
+            1: ('Acolyte Hood', 'Agility Ears', 'Cryptsinge Halo', 'Leather Cap', 'Newfold Halo', 'Initiate Spectacles'),
+            2: ('Demicrypt Halo', 'Dense Helm', 'Diva Crown', 'Geistlord Crown', 'Iron Halo', 'Journeyman Spectacles', 'Necromancer Hood'),
+            3: ('Amberite Helm', 'Magistrate Circlet', 'Nethercrypt Halo', 'Rage Circlet'),
+            4: ('Carbuncle Hat', 'Geistlord Eye', 'Glyphgrift Halo', 'Jestercast Memory', 'Knightguard Halo', 'Mithril Halo'),
+            5: ('Boarus Helm', 'Boarus Torment', 'Deathknight Helm', 'Dire Helm', 'Druidic Halo', 'Emerock Halo', 'Guardel Helm', 'Leathen Cap'),
+        },
+        # Cape
+        'cape': {
+            1: ('Initiate Cloak', 'Slimewoven Cloak'),
+            2: ('Nokket Cloak', 'Regazuul Cape', 'Rugged Cloak'),
+            3: ('Cozy Cloak', 'Flux Cloak', 'Nethercrypt Cloak'),
+            4: ('Blueversa Cape', 'Cobblerage Cloak', 'Deathward Cape', 'Forlorn Cloak', 'Greenversa Cape', 'Meshlink Cape', 'Nulversa Cape', 'Redversa Cape', 'Roudon Cape', 'Sagecaller Cape'),
+            5: ('Mekwar Drape', 'Windgolem Cloak'),
+        },
+        # Chest piece
+        'chest_piece': {
+            1: ('Aero Top', 'Cryptsinge Chest', 'Ghostly Tabard', 'Journeyman Vest', 'Leather Top', 'Necro Marrow', 'Nutso Top', 'Poacher Cloth', 'Ragged Shirt', 'Sagecloth Top', 'Slimecrust Chest', 'Slimek Chest', 'Worn Robe'),
+            2: ('Apprentice Robe', 'Dense Chestpiece', 'Duelist Garb', 'Skywrill Tabard', "Sleeper's Robe", 'Tattered Battlerobe', 'Trodd Tunic', 'Iron Chestpiece', 'Warrior Chest'),
+            3: ('Amberite Breastplate', 'Chainmail Guard', 'Golem Chestpiece', 'Nethercrypt Tabard', 'Ornamented Battlerobe'),
+            4: ('Carbuncle Robe', 'Chainscale Chest', 'Druidic Robe', 'Emerock Chestpiece', 'Fortified Vestment', 'Gemveil Raiment', 'Mercenary Vestment', 'Mithril Chestpiece', 'Monolith Chestpiece', 'Roudon Chestpiece', 'Sapphite Guard'),
+            5: ('Earthbind Tabard', 'Gemveil Breastplate', 'Roudon Robe', 'Ruggrok Vest'),
+        },
+        # Leggings
+        'leggings': {
+            1: ('Aero Pants', 'Ghostly Legwraps', 'Journeyman Leggings', 'Journeyman Shorts', 'Leather Britches', 'Necro Caustics', 'Nutso Pants', 'Sagecloth Shorts', 'Slimecrust Leggings', 'Slimek Leggings'),
+            2: ('Dense Leggings', 'Sash Leggings', 'Warrior Leggings'),
+            3: ('Amberite Leggings', 'Chainmail Leggings', 'Darkcloth Pants'),
+            4: ('Mercenary Leggings', 'Sapphite Leggings', 'Stridebond Pants', 'Jadewail Trousers', 'Temrak Britches'),
+            5: ('Eschek Greaves', 'Gemveil Leggings'),
+        },
+        # Trinket / ring
+        'trinket': {
+            1: ("Nograd's Amulet", 'Old Ring', 'Ring Of Ambition', 'The One Ring'),
+            2: ('Ambersquire Ring', "Edon's Pendant", 'Emeraldfocus Ring', 'Sapphireweave Ring'),
+            3: ('Geistlord Ring', 'Pearlpond Ring', 'Slitherwraith Ring', 'Students Ring'),
+            4: ('Earthwoken Ring', 'Geistlord Band', 'Jadetrout Ring', 'Noji Talisman', 'Orbos Ring', 'Valor Ring'),
+            5: ('Glyphik Booklet', 'Tessellated Drive', 'Valdur Effigy'),
+        },
+    },
+
+    # Fighter
+    'fighter': {
+        # Weapon
+        'weapon': {
+            1: ('Crypt Blade', 'Femur Club', 'Gilded Sword', 'Ironbark Sword', 'Mini Geist Scythe', 'Slimecrust Blade', 'Slimek Axehammer', 'Splitbark Club'),
+            2: ('Crypt Pounder', 'Cryptsinge Halberd', 'Dawn Mace', 'Demicrypt Blade', 'Dense Hammer', 'Dense Mace', 'Dense Spear', 'Geist Scythe', 'Iron Axehammer', 'Iron Spear', 'Iron Sword', 'Mekspear', 'Rude Blade', 'Stone Greatblade', 'Vile Blade'),
+            3: ('Amberite Halberd', 'Amberite Sword', 'Amberite Warstar', "Dolkin's Axe", 'Necroroyal Halberd', 'Nethercrypt Blade', 'Poltergeist Scythe', 'Sinner Bardiche'),
+            4: ('Coldgeist Blade', 'Coldgeist Punisher', 'Mithril Greatsword', 'Deadwood Axe', 'Mithril Halberd', 'Mithril Sword', 'Nulrok Mace', 'Nulrok Spear', 'Quake Pummeler', 'Ragespear', 'Sapphite Spear', 'Serrated Blade', 'Serrated Spear'),
+            5: ('Cryotribe Spear', 'Deathknight Runeblade', 'Fier Blade', 'Firebreath Blade', 'Flametribe Spear', 'Ryzer Greataxe', 'Valdur Blade'),
+        },
+        # Chest piece
+        'chest_piece': {
+            3: ('Lord Breastplate',),
+            4: ('Berserker Chestpiece', 'King Breastplate'),
+            5: ('Executioner Vestment',),
+        },
+        # Leggings
+        'leggings': {
+            3: ('Lord Greaves',),
+            4: ('Berserker Leggings', 'King Greaves'),
+            5: ('Executioner Leggings',),
+        },
+    },
+
+    # Mystic
+    'mystic': {
+        # Weapon
+        'weapon': {
+            1: ('Marrow Bauble', 'Splitbark Scepter'),
+            2: ('Cryo Cane', 'Cryptcall Bell', 'Demicrypt Bauble', 'Iron Bell', 'Iron Scepter', 'Slime Diva Baton'),
+            3: ('Nethercrypt Bauble', 'Pyre Cane', 'Wizwand'),
+            4: ('Aquapetal Staff', 'Coldgeist Frostcaller', 'Colossus Tone', 'Flamepetal Staff', 'Mithril Bell', 'Mithril Scepter', 'Sapphite Bell', 'Sapphite Scepter'),
+            5: ('Voalstark Wand',),
+        },
+        # Helmet
+        'helmet': {
+            3: ('Focus Circlet', 'Focusi Glasses'),
+            4: ('Sapphite Mindhat',),
+            5: ('Wizlad Hood',),
+        },
+        # Chest piece
+        'chest_piece': {
+            3: ('Witchlock Robe',),
+            4: ('Magilord Overalls', 'Witchwizard Robe'),
+            5: ('Wizlad Robe',),
+        },
+        # Leggings
+        'leggings': {
+            3: ('Witchlock Loincloth',),
+            4: ('Magilord Boots', 'Witchwizard Garterbelt'),
+        },
+    },
+
+    # Bandit
+    'bandit': {
+        # Weapon
+        'weapon': {
+            1: ('Crypt Bow', 'Cryptsinge Katars', 'Slimecrust Katars', 'Slimek Shivs'),
+            2: ('Deathgel Shivs', 'Demicrypt Bow', 'Dense Katars', 'Iron Bow', 'Iron Katars', 'Mekspike Bow', 'Menace Bow', 'Runic Katars'),
+            3: ('Amberite Boomstick', 'Geistlord Claws', 'Hellsludge Shivs', 'Mithril Bow', 'Mithril Katars', 'Necroroyal Bow', 'Petrified Bow'),
+            4: ('Frostbite Claws', 'Golemfist Katars', 'Magitek Burstgun', 'Rummok Bladerings', 'Sapphite Katars', 'Serrated Knuckles', 'Coldgeist Bow', 'Serrated Longbow'),
+            5: ('Follycannon', 'Torrentius Longbow'),
+        },
+        # Chest piece
+        'chest_piece': {
+            3: ('Reapsow Garb',),
+            4: ('Fuguefall Duster', 'Reaper Gi'),
+            5: ('Fender Garb',),
+        },
+        # Leggings
+        'leggings': {
+            3: ('Reapsow Pants',),
+            4: ('Fuguefall Pants', 'Reaper Leggings'),
+            5: ('Fender Leggings',),
+        },
+    },
+
+    # Fighter / Mystic
+    'fighter_mystic': {
+        # Shield
+        'shield': {
+            1: ('Wooden Shield', 'Crypt Buckler', 'Slimek Shield'),
+            2: ('Demicrypt Buckler', 'Dense Shield', 'Iris Shield', 'Iron Shield', 'Omen Shield'),
+            3: ('Amberite Shield', 'Mithril Shield', 'Nethercrypt Shield', 'Slabton Shield'),
+            4: ('Rigor Buckler', 'Rustweary Shield', 'Rustwise Shield', 'Sapphite Shield'),
+            5: ('Daemon Shield', 'Irisun Shield'),
+        },
+    },
 }
+
+ITEM_CLASS_AFFINITY_BY_GROUP: Dict[str, Optional[str]] = {
+    'universal': None,
+    'fighter': 'F',
+    'mystic': 'M',
+    'bandit': 'B',
+    'fighter_mystic': 'FM',
+}
+
+def _build_item_tier() -> Dict[str, int]:
+    item_tier: Dict[str, int] = {}
+    for class_groups in ITEM_DATA.values():
+        for type_groups in class_groups.values():
+            for tier, item_names in type_groups.items():
+                for item_name in item_names:
+                    if item_name in item_tier:
+                        raise ValueError(f"Duplicate item tier entry: {item_name}")
+                    item_tier[item_name] = tier
+    return item_tier
+
+
+def _build_item_class_affinity() -> Dict[str, str]:
+    item_class_affinity: Dict[str, str] = {}
+    for class_group, type_groups in ITEM_DATA.items():
+        affinity = ITEM_CLASS_AFFINITY_BY_GROUP[class_group]
+        if affinity is None:
+            continue
+        for tier_groups in type_groups.values():
+            for item_names in tier_groups.values():
+                for item_name in item_names:
+                    if item_name in item_class_affinity:
+                        raise ValueError(f"Duplicate item affinity entry: {item_name}")
+                    item_class_affinity[item_name] = affinity
+    return item_class_affinity
+
+
+ITEM_TIER: Dict[str, int] = _build_item_tier()
+ITEM_CLASS_AFFINITY: Dict[str, str] = _build_item_class_affinity()
+
+# Progressive equipment copy tiers used by gated generation.
+PROGRESSIVE_ITEM_TIERS: Dict[str, Tuple[int, ...]] = {
+    'Progressive Any Cape': (2, 4, 4, 5, 5),
+    'Progressive Any Chest Piece': (1, 2, 4, 4, 5),
+    'Progressive Any Helmet': (1, 2, 2, 4, 5, 5),
+    'Progressive Any Leggings': (1, 2, 3, 4, 5),
+    'Progressive Any Trinket': (1, 3, 4, 4, 4, 5),
+    'Progressive Any Weapon': (1, 2, 4, 3, 5),
+    'Progressive Bandit Chest Piece': (3, 4, 5),
+    'Progressive Bandit Leggings': (3, 4, 5),
+    'Progressive Bandit Weapon': (1, 2, 3, 4, 5, 5),
+    'Progressive Fighter Chest Piece': (3, 4, 5),
+    'Progressive Fighter Leggings': (3, 4, 5),
+    'Progressive Fighter Weapon': (2, 2, 3, 4, 5, 5),
+    'Progressive Mystic Chest Piece': (3, 4, 5),
+    'Progressive Mystic Helmet': (5,),
+    'Progressive Mystic Leggings': (3, 4),
+    'Progressive Mystic Weapon': (2, 2, 4, 4, 5),
+}
+
 
 def get_item_tier(item_name: str) -> Optional[int]:
     return ITEM_TIER.get(item_name)
+
+
+def get_progressive_item_tiers(item_name: str) -> Optional[Tuple[int, ...]]:
+    return PROGRESSIVE_ITEM_TIERS.get(item_name)

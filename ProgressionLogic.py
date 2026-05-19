@@ -9,7 +9,7 @@ from BaseClasses import Item, ItemClassification
 from worlds.generic.Rules import add_item_rule
 
 from .GoalScope import _get_location_min_grind_levels
-from .ItemTiers import get_item_tier
+from .ItemTiers import get_item_tier, get_progressive_item_tiers
 from .Locations import location_grind_data
 
 
@@ -200,14 +200,28 @@ def prefill_tiered_equipment(world) -> None:
         return
 
     player = world.player
-    tiered_items: List[Item] = []
+    tiered_items: List[Tuple[Item, int]] = []
     remaining_pool: List[Item] = []
+    progressive_copy_counts: Dict[str, int] = {}
 
     for item in world.multiworld.itempool:
-        if item.player == player and get_item_tier(item.name) is not None:
-            tiered_items.append(item)
-        else:
+        if item.player != player:
             remaining_pool.append(item)
+            continue
+
+        tier = get_item_tier(item.name)
+        # Progressive AP items are abstract names; tier them by copy index so
+        # late concrete rewards (e.g. class armor) cannot be placed early.
+        progressive_tiers = get_progressive_item_tiers(item.name)
+        if tier is None and progressive_tiers is not None:
+            copy_index = progressive_copy_counts.get(item.name, 0)
+            tier = progressive_tiers[min(copy_index, len(progressive_tiers) - 1)]
+            progressive_copy_counts[item.name] = copy_index + 1
+
+        if tier is None:
+            remaining_pool.append(item)
+        else:
+            tiered_items.append((item, tier))
 
     if not tiered_items:
         return
@@ -223,14 +237,10 @@ def prefill_tiered_equipment(world) -> None:
     location_slots.sort(key=lambda x: x[1], reverse=True)
 
     world.random.shuffle(tiered_items)
-    tiered_items.sort(key=lambda i: get_item_tier(i.name) or 0, reverse=True)
+    tiered_items.sort(key=lambda entry: entry[1], reverse=True)
 
     used_indices: Set[int] = set()
-    for item in tiered_items:
-        tier = get_item_tier(item.name)
-        if tier is None:
-            remaining_pool.append(item)
-            continue
+    for item, tier in tiered_items:
         placed = False
         for i, (loc, max_tier) in enumerate(location_slots):
             if i in used_indices:
@@ -301,7 +311,7 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
     pool = world.multiworld.itempool
 
     for idx, item in enumerate(pool):
-        if item.player == player and get_item_tier(item.name) is not None:
+        if item.player == player and (get_item_tier(item.name) is not None or get_progressive_item_tiers(item.name) is not None):
             pool[idx] = _random_filler_item(world)
 
     unfilled = list(world.multiworld.get_unfilled_locations(player))
