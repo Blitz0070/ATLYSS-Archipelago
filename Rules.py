@@ -168,9 +168,6 @@ def get_rule_map(player):
         and has_portal_gate(state, player, "sanctum_catacombs"),
         "Clearing Catacombs (6-12)": lambda state: can_grind_level(state, player, 6)
         and has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Becoming a Fighter": lambda state: can_grind_level(state, player, 10),
-        "Becoming a Mystic": lambda state: can_grind_level(state, player, 10),
-        "Becoming a Bandit": lambda state: can_grind_level(state, player, 10),
         "Clearing Catacombs (12-18)": lambda state: can_grind_level(state, player, 12)
         and has_portal_gate(state, player, "sanctum_catacombs_f3"),
         "Clearing Grove (15-20)": lambda state: can_grind_level(state, player, 15)

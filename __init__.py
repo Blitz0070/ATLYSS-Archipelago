@@ -36,7 +36,7 @@ class Atlyss(World):
 
     def generate_early(self):
         options = self.options
-        # Universal Tracker sets re_gen_passthrough; apply it before validate_option_errors / check_options.
+        # Universal Tracker sets re_gen_passthrough before generation.
         # Vanilla gen never has this attribute, so duplicate main+secondary still errors below.
         if getattr(self.multiworld, "re_gen_passthrough", None) is not None:
             if "Atlyss" in self.multiworld.re_gen_passthrough:
@@ -53,24 +53,12 @@ class Atlyss(World):
                 if "achievements" in passthrough:
                     options.achievements = Achievements(passthrough["achievements"])
 
-                if "main_class" in passthrough:
-                    options.main_class = MainClass(passthrough["main_class"])
-
-                if "secondary_class" in passthrough:
-                    options.secondary_class = SecondaryClass(passthrough["secondary_class"])
-
                 if "experience_multiplier" in passthrough:
                     options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
 
                 if "profession_tools" in passthrough:
                     from .Options import ProfessionTools as ProfessionToolsOption
                     options.profession_tools = ProfessionToolsOption(passthrough["profession_tools"])
-
-            # UT defaults (and YAML slot edge cases) can leave main == secondary; SecondaryClass.option_none = 3.
-            if options.main_class.value == options.secondary_class.value:
-                options.secondary_class = SecondaryClass(3)
-
-        check_options(self)
 
     def create_regions(self):
         gen_create_regions(self)
@@ -98,8 +86,6 @@ class Atlyss(World):
             "equipment_progression": int(self.options.equipment_progression),
             "profession_tools": int(self.options.profession_tools),
             "class_filter": int(self.options.class_filter),
-            "main_class": int(self.options.main_class),
-            "secondary_class": int(self.options.secondary_class),
             "experience_multiplier": int(self.options.experience_multiplier)
         }
         return slot_data

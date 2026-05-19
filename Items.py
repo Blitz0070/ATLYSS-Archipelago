@@ -39,6 +39,16 @@ bandit_progressives = {
 	"Progressive Bandit Leggings": 3
 }
 
+CLASS_FILTER_CLASSES = {
+	0: {"fighter", "mystic", "bandit"},
+	1: {"fighter"},
+	2: {"mystic"},
+	3: {"bandit"},
+	4: {"fighter", "mystic"},
+	5: {"fighter", "bandit"},
+	6: {"mystic", "bandit"},
+}
+
 item_counts_useful = {
 	"Tome of Naivety": 2,
 	"Tome of Unlearning": 2,
@@ -550,6 +560,10 @@ def _is_filler_item_name(name: str) -> bool:
 	return item_table[name] == ItemClassification.filler
 
 
+def _class_filter_allows_progressive(filter_value: int, class_name: str) -> bool:
+	return class_name in CLASS_FILTER_CLASSES.get(filter_value, CLASS_FILTER_CLASSES[0])
+
+
 def _balance_gated_pool(world, pool, max_non_filler: int, junk_count: int,
                         filler_names, filler_weightings, random) -> None:
 	"""Ensure junk slots can receive filler and cap optional useful items."""
@@ -600,22 +614,21 @@ def gen_create_items(world):
 	filler_item_names = [key for key, value in filler_weights.items()]
 	filler_weightings = [value for key, value in filler_weights.items()]
 
-	if not options.is_class('fighter') and not options.is_class('mystic') and not options.is_class('bandit'):
+	if gated:
 		for item, amt in any_progressives.items():
 			for _ in range(amt):
 				_append_item(item, required=True)
-	if options.is_class('fighter'):
-		for item, amt in fighter_progressives.items():
-			for _ in range(amt):
-				_append_item(item, required=True)
-	if options.is_class('mystic'):
-		for item, amt in mystic_progressives.items():
-			for _ in range(amt):
-				_append_item(item, required=True)
-	if options.is_class('bandit'):
-		for item, amt in bandit_progressives.items():
-			for _ in range(amt):
-				_append_item(item, required=True)
+		class_progressive_pools = (
+			("fighter", fighter_progressives),
+			("mystic", mystic_progressives),
+			("bandit", bandit_progressives),
+		)
+		for class_name, class_pool in class_progressive_pools:
+			if not _class_filter_allows_progressive(class_filter, class_name):
+				continue
+			for item, amt in class_pool.items():
+				for _ in range(amt):
+					_append_item(item, required=True)
 	for item, amt in item_counts_useful.items():
 		for _ in range(amt):
 			_append_item(item)
@@ -647,6 +660,17 @@ def gen_create_items(world):
 				continue
 			if tier is not None:
 				tier_counts[tier] += 1
+			_append_item(item_name)
+	elif world.location_count > 0:
+		candidates = [
+			item_name for item_name in useful_items
+			if get_item_tier(item_name) is not None
+			and item_passes_class_filter(class_filter, item_name)
+		]
+		random.shuffle(candidates)
+		for item_name in candidates:
+			if world.location_count <= 0:
+				break
 			_append_item(item_name)
 
 	if gated:

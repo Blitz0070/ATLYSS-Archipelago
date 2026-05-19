@@ -65,9 +65,10 @@ class Achievements(DefaultOnToggle):
 
 class ClassFilter(Choice):
     """
-	Filter random equipment pool by class (weapons/armor affinity).
-	All Classes: no filter. Single/dual class: only matching gear in gated fill.
-	Universal trinkets, consumables, and progression items are never filtered.
+	Filter equipment pool by class (progressive class gear and non-progressive
+	weapons/armor affinity).
+	All Classes: no filter. Single/dual class: only matching class gear.
+	Universal trinkets, consumables, and "Progressive Any" items are never filtered.
     """
     display_name = "Class Filter"
     option_all_classes = 0
@@ -82,38 +83,16 @@ class ClassFilter(Choice):
 
 class EquipmentProgression(Choice):
     """
-	How non-progressive equipment is distributed during fill (future).
-	Gated: high-tier gear only at checks reachable at that level (requires item
-	tier metadata — not yet fully wired).
-	Unrestricted: equipment can appear on any check (current behaviour).
+	How equipment is distributed.
+	Gated: progressive equipment is in the pool and gear placement follows
+	level/tier logic.
+	Unrestricted: progressive equipment is removed; individual gear pieces are
+	randomized directly and can appear on any check.
     """
     display_name = "Equipment Progression"
     option_gated = 0
     option_unrestricted = 1
     default = 1
-
-
-class MainClass(Choice):
-    """
-	What you chose to be as your main class
-	"""
-    display_name = "Main Class"
-    option_fighter = 0
-    option_bandit = 1
-    option_mystic = 2
-    default = 0
-
-
-class SecondaryClass(Choice):
-    """
-	What you chose to be as your secondary class
-	"""
-    display_name = "Secondary Class"
-    option_fighter = 0
-    option_bandit = 1
-    option_mystic = 2
-    option_none = 3
-    default = 3
 
 
 class ProfessionTools(Choice):
@@ -157,26 +136,4 @@ class AtlyssOptions(PerGameCommonOptions):
     equipment_progression: EquipmentProgression
     profession_tools: ProfessionTools
     class_filter: ClassFilter
-    main_class: MainClass
-    secondary_class: SecondaryClass
     experience_multiplier: ExperienceMultiplier
-
-    def is_class(self, class_name):
-        class_name_lower = class_name.lower()
-        if class_name_lower == 'any': return True
-        return class_name_lower == self.main_class.current_key or class_name_lower == self.secondary_class.current_key
-
-
-def check_options(world):
-    options = world.options
-    random = world.random
-    settings = world.settings
-    classes = ['fighter', 'mystic', 'bandit']
-
-    if (options.main_class.value == options.secondary_class.value
-            and options.secondary_class.value != 3):
-        raise_yaml_error(world.player, "You cannot have the same class selected for main_class and secondary_class")
-
-
-def raise_yaml_error(player_name, error):
-    raise OptionError(f'\n\n=== Atlyss YAML ERROR ===\nAtlyss: {player_name} {error}, PLEASE FIX YOUR YAML\n\n')
