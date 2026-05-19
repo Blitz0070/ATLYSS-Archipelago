@@ -1,8 +1,9 @@
 """
-Quest location access: level + prerequisite quest chain + portal gates.
+Quest access plus shared portal gates.
 
-Portal gates follow Improved-Logic rules.py (random named portal items OR
-progressive unlock count). Story quests keep APWorld prerequisite chains.
+PORTAL_GATES are reusable portal-route profiles. Any rule that needs a specific
+route (quests, shops, achievements, bosses, professions) should reference the
+same gate id instead of rebuilding named/progressive portal logic locally.
 
 See Rules.py header for progressive portal order (1=Outer … 14=Bularr).
 """
@@ -24,7 +25,7 @@ GROVE_LVL2_PORTAL = "Cresent Grove lvl 2 Portal"
 # mode: unlock count only (Outer is always unlock #1 in the chain).
 PortalGate = Tuple[Tuple[str, ...], int]
 
-# Gate ids name portals/areas
+# Gate ids name portals/areas, not story beats.
 PORTAL_GATES: Dict[str, PortalGate] = {
     "outer_sanctum": ((OUTER_SANCTUM_PORTAL,), 1),
     "arcwood_pass": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal"), 2),
@@ -51,7 +52,7 @@ PORTAL_GATES: Dict[str, PortalGate] = {
     "luvora_garden": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Luvora Garden Portal"), 9),
     "crescent_grove_colossus": (
         (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", GROVE_LVL1_PORTAL 
+            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", GROVE_LVL1_PORTAL
         ),
         12,
     ),
@@ -92,10 +93,10 @@ PORTAL_GATES: Dict[str, PortalGate] = {
     ),
     "glyphik_route": (
         (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Cresent Keep Portal", "Luvora Garden Portal", "Tuul Valley Portal", "Tuul Enclave Portal",
+            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", "Luvora Garden Portal", "Tuul Valley Portal", "Tuul Enclave Portal",
             GROVE_LVL1_PORTAL, GROVE_LVL2_PORTAL, "Bularr Fortress Portal",
         ),
-        13,
+        14,
     ),
 }
 
@@ -105,6 +106,12 @@ def _random_portals_for_gate(random_items: tuple) -> tuple:
     if OUTER_SANCTUM_PORTAL not in random_items:
         return (OUTER_SANCTUM_PORTAL,) + random_items
     return random_items
+
+
+def get_portal_gate(gate_id: str) -> PortalGate:
+    """Return (random named portals, progressive count) for a shared gate id."""
+    random_items, progressive = PORTAL_GATES[gate_id]
+    return _random_portals_for_gate(random_items), progressive
 
 # quest_name -> (min_level, after_quest, portal_gate_id) — gate ids match PORTAL_GATES keys
 QUEST_ACCESS: Dict[str, Tuple[int, Optional[str], Optional[str]]] = {
@@ -194,8 +201,7 @@ _validate_quest_table()
 
 def _make_quest_rule(level: int, after: Optional[str], gate_id: Optional[str]):
     if gate_id:
-        random_items, progressive = PORTAL_GATES[gate_id]
-        random_items = _random_portals_for_gate(random_items)
+        random_items, progressive = get_portal_gate(gate_id)
     else:
         random_items, progressive = (), 0
 

@@ -1,4 +1,4 @@
-from BaseClasses import Location, Region, Item, ItemClassification, LocationProgressType
+from BaseClasses import Location, Region, Item, ItemClassification
 from .Locations import *
 from .Rules import *
 from .GoalScope import location_in_goal_scope
@@ -6,9 +6,6 @@ from .ProfessionToolData import PROFESSION_TOOL_BUYS
 from .RegionGraph import region_rule
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
-
-priority_map = []
-
 
 def _goal_value(world) -> int:
     return int(world.options.goal)
@@ -152,8 +149,5 @@ def make_location_adv(world, location_name_a, location_name_b, id, region, rule_
 
     if location_name_b in rule_map:
         location.access_rule = rule_map[location_name_b]
-
-    if location_name_a in priority_map:
-        location.progress_type = priority_map[location_name_a]
 
     return location
