@@ -44,7 +44,7 @@ def has_mining_tool_for_logic(state, player) -> bool:
 
 
 def get_rule_map(player):
-    rules = get_quest_rule_map()
+    rules = get_quest_rule_map(player)
     rules.update({
         # ----- Level milestones -----
         "Reach Level 2": lambda state: can_grind_level(state, player, 2),
@@ -202,6 +202,8 @@ def get_rule_map(player):
 # =============================================================================
 
 def has_area(state, player, area) -> bool:
+    if area == "Sanctum":
+        return True
     if not state.multiworld.worlds[player].options.random_portals:
         return state.has("Progressive Portal", player, portal_counts[area])
     if area == "Cresent Grove lvl 2":

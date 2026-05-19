@@ -199,13 +199,13 @@ def _validate_quest_table() -> None:
 _validate_quest_table()
 
 
-def _make_quest_rule(level: int, after: Optional[str], gate_id: Optional[str]):
+def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Optional[str]):
     if gate_id:
         random_items, progressive = get_portal_gate(gate_id)
     else:
         random_items, progressive = (), 0
 
-    def rule(state, player):
+    def rule(state):
         from .Rules import can_grind_level, has_portal_access, has_quest
 
         if not can_grind_level(state, player, level):
@@ -219,9 +219,9 @@ def _make_quest_rule(level: int, after: Optional[str], gate_id: Optional[str]):
     return rule
 
 
-def get_quest_rule_map() -> dict:
+def get_quest_rule_map(player: int) -> dict:
     """Access rules for every entry in Locations.quests."""
     return {
-        name: _make_quest_rule(level, after, gate)
+        name: _make_quest_rule(player, level, after, gate)
         for name, (level, after, gate) in QUEST_ACCESS.items()
     }

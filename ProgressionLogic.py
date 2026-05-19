@@ -154,10 +154,6 @@ def set_profession_junk_rules(world) -> None:
             )
 
 
-# Filler-class items required on non-junk checks (logic uses has_item).
-GATED_NON_JUNK_FILLER_LOCATIONS = frozenset({"Altered Vision"})
-
-
 def set_gated_filler_reserved_for_junk_rules(world) -> None:
     """Gated: filler may only fill fishing/mining checks, not shops or quests."""
     if world.options.equipment_progression.value != 0:
@@ -168,8 +164,6 @@ def set_gated_filler_reserved_for_junk_rules(world) -> None:
             continue
         for location in region.locations:
             if is_junk_only_location(location.name):
-                continue
-            if location.name in GATED_NON_JUNK_FILLER_LOCATIONS:
                 continue
             add_item_rule(
                 location,
@@ -310,8 +304,6 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
         if item.player == player and get_item_tier(item.name) is not None:
             pool[idx] = _random_filler_item(world)
 
-    _prefill_illusion_stone_for_altered_vision(world, pool, player)
-
     unfilled = list(world.multiworld.get_unfilled_locations(player))
     junk_unfilled = sum(1 for loc in unfilled if is_junk_only_location(loc.name))
     non_junk_unfilled = len(unfilled) - junk_unfilled
@@ -368,33 +360,6 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
             pool[idx] = _random_filler_item(world)
         else:
             pool[idx] = _safe_pool_useful_item(world)
-
-
-def _prefill_illusion_stone_for_altered_vision(world, pool, player: int) -> None:
-    """Altered Vision logic requires Illusion Stone; reserve it before main fill."""
-    for loc in world.multiworld.get_unfilled_locations(player):
-        if loc.name != "Altered Vision":
-            continue
-        stone_idx = next((i for i, it in enumerate(pool) if it.player == player and it.name == "Illusion Stone"), None)
-        if stone_idx is not None:
-            loc.place_locked_item(pool.pop(stone_idx))
-        else:
-            loc.place_locked_item(world.create_item("Illusion Stone"))
-            # Locked fill does not pull from the pool; drop one item so pool size matches unfilled slots.
-            drop_idx = next(
-                (
-                    i
-                    for i, it in enumerate(pool)
-                    if it.player == player and it.classification == ItemClassification.filler
-                ),
-                None,
-            )
-            if drop_idx is not None:
-                pool.pop(drop_idx)
-            elif pool:
-                pool.pop()
-        return
-
 
 def apply_progression_rules(world) -> None:
     set_profession_junk_rules(world)

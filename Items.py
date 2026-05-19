@@ -8,6 +8,7 @@ from .ProgressionLogic import (
 )
 from .ItemTiers import get_item_tier
 from .ItemClassAffinity import item_passes_class_filter
+from .ProfessionToolData import PROFESSION_TOOL_BUYS
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
@@ -64,6 +65,7 @@ item_counts_filler = {
 
 item_counts_progression = {
 	"Experience Bond": 1,
+	"Illusion Stone": 1,
 }
 
 filler_items = [
@@ -85,7 +87,6 @@ filler_items = [
 	"Stamstar",
 	"Wisdom Potion Pack",
 	"Wisdom Vial Pack",
-	"Illusion Stone",
 	"Festive Hat",
 	"Fishin Hat",
 	"Orefinder Hat",
@@ -483,6 +484,7 @@ useful_items = [
 
 progression_items = [
 	"Experience Bond",
+	"Illusion Stone",
 	"Fishing Rod",
 	"Pickaxe",
 ]
@@ -525,7 +527,6 @@ filler_weights = {
 }
 
 portals = [
-	"Sanctum Portal",
 	"Outer Sanctum Portal",
 	"Arcwood Pass Portal",
 	"Effold Terrace Portal",
@@ -638,6 +639,9 @@ def gen_create_items(world):
 	for item, amt in item_counts_progression.items():
 		for _ in range(amt):
 			_append_item(item, required=True)
+	if options.profession_tools.value == 1:
+		for _location_name, item_name in PROFESSION_TOOL_BUYS:
+			_append_item(item_name, required=True)
 	if options.random_portals:
 		for item in portals:
 			_append_item(item, required=True)
