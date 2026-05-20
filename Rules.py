@@ -1,10 +1,21 @@
+from .AccessData import (
+    AREA_STORY_QUEST,
+    SHOP_MERCHANT_AREA,
+    SHOP_MERCHANT_GATE,
+    SHOP_MERCHANT_STORY_QUEST,
+    SHOP_AP_ITEMS_PORTAL_GATE,
+)
 from .Locations import *
-from .QuestAccess import get_portal_gate, get_quest_rule_map
+from .QuestAccess import get_area_portal_gate, get_portal_gate, get_quest_rule_map
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
 # =============================================================================
 # Portal access (YAML: random_portals) — used by region routes and QuestAccess.py
+#
+# random_portals: has_area() -> QuestAccess.AREA_TO_GATE -> has_portal_gate() (full hub chain).
+# progressive: has_area() -> portal_counts (same unlock order as PORTAL_GATES).
+# has_area_for_gameplay(): has_area + AccessData.AREA_STORY_QUEST (matches Regions.py).
 #
 # Progressive unlock order:
 #   1 Outer  2 Arcwood  3–5 Catacombs lvl 1–3  6 Effold  7 Tuul  8 Road
@@ -35,6 +46,10 @@ def has_portal_gate(state, player, gate_id: str) -> bool:
     return has_portal_access(state, player, random_items, progressive)
 
 
+def has_quest(state, player, quest) -> bool:
+    return state.has(f"Complete: {quest}", player, 1)
+
+
 def has_fishing_tool_for_logic(state, player) -> bool:
     return state.has("Fishing Rod", player, 1)
 
@@ -43,47 +58,27 @@ def has_mining_tool_for_logic(state, player) -> bool:
     return state.has("Pickaxe", player, 1)
 
 
-_SHOP_SLOT_LEVELS = (4, 8, 12, 16, 20)
-
-_SHOP_MERCHANT_AREA = {
-    "Sally's Nook": "Sanctum",
-    "Skrit's Sikrit Market": "Sanctum",
-    "Dye Merchant": "Sanctum",
-    "Ruka's Furnace": "Sanctum",
-    "Torta's Fishing Shack": "Sanctum",
-    "Mad Statue's Gift": "Sanctum",
-}
-
-_SHOP_MERCHANT_GATE = {
-    "Frankie's Goods": "arcwood_pass",
-    "Tesh's Wares": "sanctum_catacombs_f2",
-    "Nesh's Wares": "sanctum_catacombs_f3",
-    "Rikko's Treasures": "crescent_grove_colossus",
-    "Cotoo's Treasures": "crescent_grove_lvl2",
-}
-
-
 def has_shop_access(state, player, merchant: str) -> bool:
-    gate_id = _SHOP_MERCHANT_GATE.get(merchant)
+    gate_id = SHOP_MERCHANT_GATE.get(merchant)
     if gate_id is not None:
-        return has_portal_gate(state, player, gate_id)
-    area = _SHOP_MERCHANT_AREA.get(merchant)
-    if area is not None:
-        return has_area(state, player, area)
-    return False
+        if not has_portal_gate(state, player, gate_id):
+            return False
+    else:
+        area = SHOP_MERCHANT_AREA.get(merchant)
+        if area is None or not has_area(state, player, area):
+            return False
+    story_quest = SHOP_MERCHANT_STORY_QUEST.get(merchant)
+    if story_quest is not None and not has_quest(state, player, story_quest):
+        return False
+    return True
 
 
-def _shop_slot_min_level(merchant: str, slot: int) -> int:
-    if merchant == "Sally's Nook" and slot == 1:
-        return 1
-    return _SHOP_SLOT_LEVELS[slot - 1]
+def has_shop_slot_portal_unlock(state, player, merchant: str, slot: int) -> bool:
+    return has_portal_gate(state, player, SHOP_AP_ITEMS_PORTAL_GATE)
 
 
 def has_shop_slot_progress(state, player, merchant: str, slot: int) -> bool:
-    return (
-        has_shop_access(state, player, merchant)
-        and can_grind_level(state, player, _shop_slot_min_level(merchant, slot))
-    )
+    return has_shop_access(state, player, merchant) and has_shop_slot_portal_unlock(state, player, merchant, slot)
 
 
 def apply_shop_slot_rules(rules: dict, player) -> None:
@@ -119,62 +114,7 @@ def get_rule_map(player):
         "Reach Level 28": lambda state: can_grind_level(state, player, 28),
         "Reach Level 30": lambda state: can_grind_level(state, player, 30),
         "Reach Level 32": lambda state: can_grind_level(state, player, 32),
-        # ----- Shops -----
-        "Buy Item #1 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Sally's Nook": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #1 from Skrit's Sikrit Market": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Skrit's Sikrit Market": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Skrit's Sikrit Market": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Skrit's Sikrit Market": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Skrit's Sikrit Market": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #1 from Frankie's Goods": lambda state: has_portal_gate(state, player, "arcwood_pass"),
-        "Buy Item #2 from Frankie's Goods": lambda state: has_portal_gate(state, player, "arcwood_pass"),
-        "Buy Item #3 from Frankie's Goods": lambda state: has_portal_gate(state, player, "arcwood_pass"),
-        "Buy Item #4 from Frankie's Goods": lambda state: has_portal_gate(state, player, "arcwood_pass"),
-        "Buy Item #5 from Frankie's Goods": lambda state: has_portal_gate(state, player, "arcwood_pass"),
-        "Buy Item #1 from Dye Merchant": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Dye Merchant": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Dye Merchant": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Dye Merchant": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Dye Merchant": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #1 from Tesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Buy Item #2 from Tesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Buy Item #3 from Tesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Buy Item #4 from Tesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Buy Item #5 from Tesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Buy Item #1 from Nesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Buy Item #2 from Nesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Buy Item #3 from Nesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Buy Item #4 from Nesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Buy Item #5 from Nesh's Wares": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Buy Item #1 from Rikko's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Buy Item #2 from Rikko's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Buy Item #3 from Rikko's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Buy Item #4 from Rikko's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Buy Item #5 from Rikko's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Buy Item #1 from Cotoo's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Buy Item #2 from Cotoo's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Buy Item #3 from Cotoo's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Buy Item #4 from Cotoo's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Buy Item #5 from Cotoo's Treasures": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Buy Item #1 from Ruka's Furnace": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Ruka's Furnace": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Ruka's Furnace": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Ruka's Furnace": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Ruka's Furnace": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #1 from Torta's Fishing Shack": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Torta's Fishing Shack": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Torta's Fishing Shack": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Torta's Fishing Shack": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Torta's Fishing Shack": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #1 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #2 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #3 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #4 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Item #5 from Mad Statue's Gift": lambda state: has_area(state, player, "Sanctum"),
+        # Shop buy rules: apply_shop_slot_rules() below (merchant access + Catacombs lvl 2 portal gate).
         "Buy Fishing Rod": lambda state: has_area(state, player, "Sanctum"),
         "Buy Pickaxe": lambda state: has_area(state, player, "Sanctum"),
         # ----- Professions -----
@@ -219,27 +159,27 @@ def get_rule_map(player):
         "Mining Lv. 10": lambda state: can_grind_mine(state, player, 10) and has_mining_high_route(state, player)
         and has_mining_tool_for_logic(state, player),
         # ----- Achievements -----
-        "A New Journey": lambda state: can_grind_level(state, player, 0),
-        "Clearing Catacombs (1-6)": lambda state: can_grind_level(state, player, 1)
+        "A New Journey": lambda state: can_grind_level(state, player, 1),
+        "Clearing Catacombs (1-6)": lambda state: can_grind_level(state, player, 6)
         and has_portal_gate(state, player, "sanctum_catacombs"),
-        "Clearing Catacombs (6-12)": lambda state: can_grind_level(state, player, 6)
+        "Clearing Catacombs (6-12)": lambda state: can_grind_level(state, player, 12)
         and has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Clearing Catacombs (12-18)": lambda state: can_grind_level(state, player, 12)
+        "Clearing Catacombs (12-18)": lambda state: can_grind_level(state, player, 18)
         and has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Clearing Grove (15-20)": lambda state: can_grind_level(state, player, 15)
+        "Clearing Grove (15-20)": lambda state: can_grind_level(state, player, 20)
         and has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Clearing Grove (20-25)": lambda state: can_grind_level(state, player, 20)
+        "Clearing Grove (20-25)": lambda state: can_grind_level(state, player, 25)
         and has_portal_gate(state, player, "crescent_grove_lvl2"),
         "Judgement": lambda state: can_grind_level(state, player, 28) and has_item(state, player, "Experience Bond", 1),
         "Corrupted Arcana": lambda state: can_grind_level(state, player, 28) and has_item(state, player,
                                                                                           "Experience Bond", 1),
         "Holier than Thou": lambda state: can_grind_level(state, player, 28) and has_item(state, player,
                                                                                           "Experience Bond", 1),
-        "Altered Vision": lambda state: can_grind_level(state, player, 0) and has_item(state, player, "Illusion Stone",
+        "Altered Vision": lambda state: can_grind_level(state, player, 1) and has_item(state, player, "Illusion Stone",
                                                                                        1),
-        "Scaling the Tower": lambda state: can_grind_level(state, player, 0),
-        "Rude!": lambda state: can_grind_level(state, player, 0),
-        "Fashion Sense": lambda state: can_grind_level(state, player, 0),
+        "Scaling the Tower": lambda state: can_grind_level(state, player, 1),
+        "Rude!": lambda state: can_grind_level(state, player, 1),
+        "Fashion Sense": lambda state: can_grind_level(state, player, 1),
         "Trout Master": lambda state: can_grind_fish(state, player, 10),
         "Skill Student": lambda state: can_grind_level(state, player, 10),
         # ----- Boss checks -----
@@ -261,25 +201,31 @@ def get_rule_map(player):
 def has_area(state, player, area) -> bool:
     if area == "Sanctum":
         return True
-    if not state.multiworld.worlds[player].options.random_portals:
+    if not _use_random_portals(state, player):
         return state.has("Progressive Portal", player, portal_counts[area])
-    if area == "Cresent Grove lvl 2":
-        return (
-            state.has("Cresent Grove lvl 1 Portal", player, 1)
-            and state.has("Cresent Grove lvl 2 Portal", player, 1)
-        )
+    gate_id = get_area_portal_gate(area)
+    if gate_id is not None:
+        return has_portal_gate(state, player, gate_id)
     portal = f"{area} Portal"
     return state.has(portal, player, 1)
 
 
-# Fork shop/profession portal matrix (Improved-Logic rules.py SHOP + PROFESSION blocks).
-_FISHING_MID_ROUTE = ("Outer Sanctum", "Arcwood Pass", "Sanctum Catacombs lvl 1")
-_FISHING_HIGH_ROUTE = (
-    "Cresent Road", "Effold Terrace", "Outer Sanctum", "Arcwood Pass", "Sanctum Catacombs lvl 1"
-)
-_MINING_EARLY_ROUTE = ("Outer Sanctum", "Arcwood Pass")
-_MINING_MID_ROUTE = ("Tuul Valley", "Outer Sanctum")
-_MINING_HIGH_ROUTE = ("Tuul Valley", "Outer Sanctum", "Tuul Enclave")
+def has_area_for_gameplay(state, player, area: str) -> bool:
+    """Portal route plus story quest gates that match Regions.py entrances."""
+    if not has_area(state, player, area):
+        return False
+    story_quest = AREA_STORY_QUEST.get(area)
+    if story_quest is None:
+        return True
+    return has_quest(state, player, story_quest)
+
+
+def _catacombs_gate_for_enemy_areas(areas) -> str:
+    if any("lvl 3" in area for area in areas):
+        return "sanctum_catacombs_f3"
+    if any("lvl 2" in area for area in areas):
+        return "sanctum_catacombs_f2"
+    return "sanctum_catacombs"
 
 
 def has_all_areas(state, player, areas) -> bool:
@@ -287,34 +233,32 @@ def has_all_areas(state, player, areas) -> bool:
 
 
 def has_portal_route(state, player, areas: tuple) -> bool:
-    """All regions on route: per-area portal_counts in progressive mode, all named portals in random mode."""
-    if not state.multiworld.worlds[player].options.random_portals:
-        return all(has_area(state, player, area) for area in areas)
+    """Every area on the route must satisfy has_area (portal chain per AREA_TO_GATE)."""
     return has_all_areas(state, player, areas)
 
 
 def has_fishing_mid_route(state, player) -> bool:
-    return has_portal_route(state, player, _FISHING_MID_ROUTE)
+    return has_area_for_gameplay(state, player, "Sanctum Catacombs lvl 1")
 
 
 def has_fishing_high_route(state, player) -> bool:
-    return has_portal_route(state, player, _FISHING_HIGH_ROUTE)
+    return (
+        has_area_for_gameplay(state, player, "Sanctum Catacombs lvl 1")
+        and has_area_for_gameplay(state, player, "Cresent Road")
+        and has_area_for_gameplay(state, player, "Effold Terrace")
+    )
 
 
 def has_mining_early_route(state, player) -> bool:
-    return has_portal_route(state, player, _MINING_EARLY_ROUTE)
+    return has_portal_gate(state, player, "arcwood_pass")
 
 
 def has_mining_mid_route(state, player) -> bool:
-    return has_portal_route(state, player, _MINING_MID_ROUTE)
+    return has_portal_gate(state, player, "tuul_valley")
 
 
 def has_mining_high_route(state, player) -> bool:
-    return has_portal_route(state, player, _MINING_HIGH_ROUTE)
-
-
-def has_quest(state, player, quest) -> bool:
-    return state.has(f"Complete: {quest}", player, 1)
+    return has_portal_gate(state, player, "tuul_enclave")
 
 
 # =============================================================================
@@ -326,7 +270,7 @@ def can_grind(state, player, level, area_data) -> bool:
     if level <= 1: return True
 
     for area in area_data:
-        if not has_area(state, player, area[0]): continue
+        if not has_area_for_gameplay(state, player, area[0]): continue
         if area[1] <= level <= area[2]: return can_grind(state, player, area[1] - 1, area_data)
 
     return False
@@ -351,17 +295,11 @@ def can_beat_enemy(state, player, enemy_name) -> bool:
     if not areas:
         return True
     if all(a.startswith("Sanctum Catacombs") for a in areas):
-        route = ("Outer Sanctum", "Arcwood Pass") + tuple(areas)
-        return has_portal_route(state, player, route)
-    if areas == ["Effold Terrace"]:
-        return has_portal_gate(state, player, "effold_terrace")
-    if areas == ["Cresent Grove lvl 1"]:
-        return has_portal_gate(state, player, "crescent_grove_colossus")
-    if areas == ["Cresent Grove lvl 2"]:
-        return has_portal_gate(state, player, "crescent_grove_lvl2")
-    if areas == ["Bularr Fortress"]:
-        return has_portal_gate(state, player, "bularr_fortress")
-    return has_portal_route(state, player, tuple(areas))
+        gate = _catacombs_gate_for_enemy_areas(areas)
+        if not has_portal_gate(state, player, gate):
+            return False
+        return has_quest(state, player, "Communing Catacombs")
+    return any(has_area_for_gameplay(state, player, area) for area in areas)
 
 
 def has_item(state, player, item, count) -> bool:

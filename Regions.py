@@ -1,9 +1,17 @@
 from BaseClasses import Location, Region, Item, ItemClassification
+from .AccessData import REGION_ENTRANCE_STORY_QUEST
 from .Locations import *
 from .Rules import *
 from .GoalScope import location_in_goal_scope
 from .ProfessionToolData import PROFESSION_TOOL_BUYS
 from .RegionGraph import region_rule
+
+
+def _story_quest_gate(player: int, region_name: str):
+    quest = REGION_ENTRANCE_STORY_QUEST.get(region_name)
+    if quest is None:
+        return None
+    return lambda state, q=quest, p=player: has_quest(state, p, q)
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
@@ -44,12 +52,12 @@ def gen_create_regions(world):
     region_map["Outer Sanctum"].connect(region_map["Arcwood Pass"], rule=region_rule(player, "Arcwood Pass"))
     region_map["Outer Sanctum"].connect(
         region_map["Effold Terrace"],
-        rule=region_rule(player, "Effold Terrace", lambda s: has_quest(s, player, "Communing Catacombs")),
+        rule=region_rule(player, "Effold Terrace", _story_quest_gate(player, "Effold Terrace")),
     )
     region_map["Outer Sanctum"].connect(region_map["Tuul Valley"], rule=region_rule(player, "Tuul Valley"))
     region_map["Arcwood Pass"].connect(
         region_map["Sanctum Catacombs lvl 1"],
-        rule=region_rule(player, "Sanctum Catacombs lvl 1", lambda s: has_quest(s, player, "Communing Catacombs")),
+        rule=region_rule(player, "Sanctum Catacombs lvl 1", _story_quest_gate(player, "Sanctum Catacombs lvl 1")),
     )
     region_map["Sanctum Catacombs lvl 1"].connect(
         region_map["Sanctum Catacombs lvl 2"],
@@ -61,18 +69,18 @@ def gen_create_regions(world):
     )
     region_map["Arcwood Pass"].connect(
         region_map["Cresent Road"],
-        rule=region_rule(player, "Cresent Road", lambda s: has_quest(s, player, "The Keep Within")),
+        rule=region_rule(player, "Cresent Road", _story_quest_gate(player, "Cresent Road")),
     )
     region_map["Tuul Valley"].connect(region_map["Tuul Enclave"], rule=region_rule(player, "Tuul Enclave"))
     region_map["Cresent Road"].connect(region_map["Luvora Garden"], rule=region_rule(player, "Luvora Garden"))
     region_map["Cresent Road"].connect(region_map["Cresent Keep"], rule=region_rule(player, "Cresent Keep"))
     region_map["Tuul Enclave"].connect(
         region_map["Bularr Fortress"],
-        rule=region_rule(player, "Bularr Fortress", lambda s: has_quest(s, player, "Finding Ammagon")),
+        rule=region_rule(player, "Bularr Fortress", _story_quest_gate(player, "Bularr Fortress")),
     )
     region_map["Cresent Keep"].connect(
         region_map["Cresent Grove lvl 1"],
-        rule=region_rule(player, "Cresent Grove lvl 1", lambda s: has_quest(s, player, "The Keep Within")),
+        rule=region_rule(player, "Cresent Grove lvl 1", _story_quest_gate(player, "Cresent Grove lvl 1")),
     )
     region_map["Cresent Grove lvl 1"].connect(
         region_map["Cresent Grove lvl 2"],

@@ -109,15 +109,29 @@ class ProfessionTools(Choice):
 
 class ExperienceMultiplier(Choice):
     """
-	Experience gain multiplier applied in the Atlyss mod.
-	x8.0: Extremely fast leveling.
-	x4.0: Very fast leveling.
-	x2.0: Fast leveling.
-	x1.0: Vanilla/default leveling.
-	x0.75: Slower leveling.
-	x0.5: Much slower leveling.
+	How fast you gain experience in-game (Atlyss mod).
+	Scales XP from killing creeps, completing quests, and using XP tomes.
+	Does not change crown income or shop prices. Higher XP still helps you reach
+	Reach Level checks sooner.
+	Same tiers as Crown Multiplier (x8 / x4 / x2 / x1 / x0.75 / x0.5).
 	"""
     display_name = "Experience Multiplier"
+    option_x8_0 = 0
+    option_x4_0 = 1
+    option_x2_0 = 2
+    option_x1_0 = 3
+    option_x0_75 = 4
+    option_x0_5 = 5
+    default = 3
+
+
+class CrownMultiplier(Choice):
+    """
+	Crown income scaled in the Atlyss mod: creep coin drops and quest crown rewards.
+	Shop resells and Archipelago crown items are not scaled.
+	Same tiers as Experience Multiplier (x8 / x4 / x2 / x1 / x0.75 / x0.5).
+	"""
+    display_name = "Crown Multiplier"
     option_x8_0 = 0
     option_x4_0 = 1
     option_x2_0 = 2
@@ -137,3 +151,4 @@ class AtlyssOptions(PerGameCommonOptions):
     profession_tools: ProfessionTools
     class_filter: ClassFilter
     experience_multiplier: ExperienceMultiplier
+    crown_multiplier: CrownMultiplier

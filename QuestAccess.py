@@ -11,7 +11,12 @@ from __future__ import annotations
 
 from typing import Dict, Optional, Tuple
 
-from .Locations import quests
+from .AccessData import (
+    quest_requires_fishing_rod,
+    quest_requires_pickaxe,
+    validate_story_quest_names,
+)
+from .Locations import portal_counts, quests
 
 OUTER_SANCTUM_PORTAL = "Outer Sanctum Portal"
 CATACOMBS_LVL1_PORTAL = "Sanctum Catacombs lvl 1 Portal"
@@ -99,6 +104,29 @@ PORTAL_GATES: Dict[str, PortalGate] = {
         14,
     ),
 }
+
+# Region names (portal_counts / grind tables) -> PORTAL_GATES key (random_portals full route).
+AREA_TO_GATE: Dict[str, str] = {
+    "Outer Sanctum": "outer_sanctum",
+    "Arcwood Pass": "arcwood_pass",
+    "Sanctum Catacombs lvl 1": "sanctum_catacombs",
+    "Sanctum Catacombs lvl 2": "sanctum_catacombs_f2",
+    "Sanctum Catacombs lvl 3": "sanctum_catacombs_f3",
+    "Effold Terrace": "effold_terrace",
+    "Tuul Valley": "tuul_valley",
+    "Cresent Road": "crescent_road",
+    "Luvora Garden": "luvora_garden",
+    "Cresent Keep": "crescent_keep",
+    "Tuul Enclave": "tuul_enclave",
+    "Cresent Grove lvl 1": "crescent_grove_colossus",
+    "Cresent Grove lvl 2": "crescent_grove_lvl2",
+    "Bularr Fortress": "bularr_fortress",
+}
+
+
+def get_area_portal_gate(area_name: str) -> Optional[str]:
+    """PORTAL_GATES id for a grind/region area, or None (caller may fall back)."""
+    return AREA_TO_GATE.get(area_name)
 
 
 def _random_portals_for_gate(random_items: tuple) -> tuple:
@@ -196,7 +224,25 @@ def _validate_quest_table() -> None:
             raise ValueError(f"Unknown portal gate id: {gate_id}")
 
 
+def _validate_area_to_gate() -> None:
+    missing = set(portal_counts) - {"Sanctum"} - set(AREA_TO_GATE)
+    if missing:
+        raise ValueError(f"AREA_TO_GATE missing portal_counts regions: {sorted(missing)}")
+    unknown = set(AREA_TO_GATE.values()) - set(PORTAL_GATES)
+    if unknown:
+        raise ValueError(f"AREA_TO_GATE references unknown gates: {sorted(unknown)}")
+
+
 _validate_quest_table()
+_validate_area_to_gate()
+validate_story_quest_names({name for name, _region in quests})
+
+PICKAXE_REQUIRED_QUESTS = frozenset(
+    name for name in QUEST_ACCESS if quest_requires_pickaxe(name)
+)
+FISHING_ROD_REQUIRED_QUESTS = frozenset(
+    name for name in QUEST_ACCESS if quest_requires_fishing_rod(name)
+)
 
 
 def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Optional[str]):
@@ -213,7 +259,8 @@ def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Opt
         if after is not None and not has_quest(state, player, after):
             return False
         if gate_id is not None:
-            return has_portal_access(state, player, random_items, progressive)
+            if not has_portal_access(state, player, random_items, progressive):
+                return False
         return True
 
     return rule
@@ -221,7 +268,26 @@ def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Opt
 
 def get_quest_rule_map(player: int) -> dict:
     """Access rules for every entry in Locations.quests."""
-    return {
+    rules = {
         name: _make_quest_rule(player, level, after, gate)
         for name, (level, after, gate) in QUEST_ACCESS.items()
     }
+    for name in PICKAXE_REQUIRED_QUESTS:
+        base = rules[name]
+
+        def pickaxe_rule(state, _base=base):
+            from .Rules import has_mining_tool_for_logic
+
+            return _base(state) and has_mining_tool_for_logic(state, player)
+
+        rules[name] = pickaxe_rule
+    for name in FISHING_ROD_REQUIRED_QUESTS:
+        base = rules[name]
+
+        def fishing_rod_rule(state, _base=base):
+            from .Rules import has_fishing_tool_for_logic
+
+            return _base(state) and has_fishing_tool_for_logic(state, player)
+
+        rules[name] = fishing_rod_rule
+    return rules

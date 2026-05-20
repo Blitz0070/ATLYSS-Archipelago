@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from BaseClasses import Item, ItemClassification
 from worlds.generic.Rules import add_item_rule
 
+from .AccessData import parse_shop_buy_location, shop_slot_tier_level
 from .GoalScope import _get_location_min_grind_levels
 from .ItemTiers import get_item_tier, get_progressive_item_tiers
 from .Locations import location_grind_data
@@ -28,20 +29,6 @@ def level_to_max_tier(level: int) -> int:
 REGION_MAX_TIER: dict[str, int] = {
     area_name: level_to_max_tier(max_level)
     for area_name, _min_level, max_level in location_grind_data
-}
-
-_SHOP_MERCHANT_MIN_LEVEL: dict[str, int] = {
-    "Sally's Nook": 1,
-    "Skrit's Sikrit Market": 1,
-    "Frankie's Goods": 1,
-    "Dye Merchant": 1,
-    "Ruka's Furnace": 1,
-    "Torta's Fishing Shack": 1,
-    "Mad Statue's Gift": 1,
-    "Tesh's Wares": 6,
-    "Nesh's Wares": 12,
-    "Rikko's Treasures": 15,
-    "Cotoo's Treasures": 20,
 }
 
 _HIGH_LEVEL_JUNK_MILESTONES = frozenset({"Reach Level 28", "Reach Level 30", "Reach Level 32"})
@@ -75,13 +62,10 @@ def get_menu_location_effective_level(location_name: str) -> int:
             return 8
         return 12
 
-    if location_name.startswith("Buy Item #") and " from " in location_name:
-        merchant = location_name.split(" from ", 1)[1]
-        if merchant in _SHOP_MERCHANT_MIN_LEVEL:
-            return _SHOP_MERCHANT_MIN_LEVEL[merchant]
-        for key, level in _SHOP_MERCHANT_MIN_LEVEL.items():
-            if key in merchant:
-                return level
+    parsed_shop = parse_shop_buy_location(location_name)
+    if parsed_shop is not None:
+        slot, merchant = parsed_shop
+        return shop_slot_tier_level(merchant, slot)
 
     parsed = _get_location_min_grind_levels().get(location_name)
     if parsed is not None:

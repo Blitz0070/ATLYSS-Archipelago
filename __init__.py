@@ -56,6 +56,9 @@ class Atlyss(World):
                 if "experience_multiplier" in passthrough:
                     options.experience_multiplier = ExperienceMultiplier(passthrough["experience_multiplier"])
 
+                if "crown_multiplier" in passthrough:
+                    options.crown_multiplier = CrownMultiplier(passthrough["crown_multiplier"])
+
                 if "profession_tools" in passthrough:
                     from .Options import ProfessionTools as ProfessionToolsOption
                     options.profession_tools = ProfessionToolsOption(passthrough["profession_tools"])
@@ -86,7 +89,8 @@ class Atlyss(World):
             "equipment_progression": int(self.options.equipment_progression),
             "profession_tools": int(self.options.profession_tools),
             "class_filter": int(self.options.class_filter),
-            "experience_multiplier": int(self.options.experience_multiplier)
+            "experience_multiplier": int(self.options.experience_multiplier),
+            "crown_multiplier": int(self.options.crown_multiplier),
         }
         return slot_data
 
