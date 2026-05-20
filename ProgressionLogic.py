@@ -75,8 +75,21 @@ def get_menu_location_effective_level(location_name: str) -> int:
 
 
 def get_location_max_tier(location_name: str, region_name: str) -> int:
+    """Max equipment tier allowed at a check.
+
+    Menu milestones and shop rows use explicit level bands.  Quests/achievements
+    listed under the generic ``Sanctum`` region must not use REGION_MAX_TIER for
+    ``Sanctum``(0,0 grind row → tier 1 only); use each check's min grind level
+    and the destination region's band, whichever is higher.
+    """
+    if parse_shop_buy_location(location_name) is not None:
+        return level_to_max_tier(get_menu_location_effective_level(location_name))
     if region_name == "Menu":
         return level_to_max_tier(get_menu_location_effective_level(location_name))
+    named_min = _get_location_min_grind_levels().get(location_name)
+    if named_min is not None:
+        region_tier = REGION_MAX_TIER.get(region_name, 1)
+        return max(region_tier, level_to_max_tier(named_min))
     return REGION_MAX_TIER.get(region_name, 1)
 
 
