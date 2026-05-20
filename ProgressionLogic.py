@@ -264,22 +264,28 @@ def _item_can_fit_unfilled_location(world, item: Item, loc) -> bool:
 
 
 def _safe_pool_useful_item(world):
-    """Low-tier / universal useful for pool rebalance (avoids tier-blocked fill)."""
+    """Low-tier useful for gated pool rebalance (not item_counts_useful — those are gen-only)."""
     from .ItemClassAffinity import item_passes_class_filter
-    from .Items import item_counts_useful, useful_items
+    from .Items import useful_items
 
     class_filter = world.options.class_filter.value
-    for name in item_counts_useful:
-        if item_passes_class_filter(class_filter, name):
-            return world.create_item(name)
     tier12 = [
         name for name in useful_items
         if item_passes_class_filter(class_filter, name)
-        and (get_item_tier(name) or 0) <= 2
+        and get_item_tier(name) is not None
+        and get_item_tier(name) <= 2
     ]
     if tier12:
         return world.create_item(world.random.choice(tier12))
-    return world.create_item(world.random.choice(list(useful_items)))
+    tiered = [
+        name for name in useful_items
+        if item_passes_class_filter(class_filter, name)
+        and get_item_tier(name) is not None
+    ]
+    if tiered:
+        return world.create_item(world.random.choice(tiered))
+    filtered = [name for name in useful_items if item_passes_class_filter(class_filter, name)]
+    return world.create_item(world.random.choice(filtered))
 
 
 def _item_fits_any_unfilled(world, item: Item, unfilled) -> bool:

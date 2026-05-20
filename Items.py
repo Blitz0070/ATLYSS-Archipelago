@@ -55,6 +55,7 @@ item_counts_useful = {
 	"Angela's Tear": 1,
 	"Flux Stone": 1,
 	"Might Stone": 1,
+	"Soul Pearl": 1,
 }
 
 item_counts_filler = {
@@ -469,11 +470,6 @@ useful_items = [
 	"Valdur Effigy",
 	"Glyphik Booklet",
 	"Tessellated Drive",
-	"Agility Stone",
-	"Angela's Tear",
-	"Flux Stone",
-	"Might Stone",
-	"Soul Pearl"
 ]
 
 progression_items = [
@@ -543,6 +539,7 @@ item_table = {
 	**{item: ItemClassification.useful for item in mystic_progressives},
 	**{item: ItemClassification.useful for item in bandit_progressives},
 	**{item: ItemClassification.filler for item in filler_items},
+	**{item: ItemClassification.useful for item in item_counts_useful},
 	**{item: ItemClassification.useful for item in useful_items},
 	**{item: ItemClassification.progression for item in progression_items},
 	**{item: ItemClassification.progression for item in portals},
