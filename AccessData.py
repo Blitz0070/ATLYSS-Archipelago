@@ -6,7 +6,51 @@ Story quest keys must match Regions.py entrance gates and QuestAccess quest name
 """
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Tuple
+
+# Progressive portal lines (must match ArchipelagoGameDataTables.cs).
+PROGRESSIVE_SANCTUM_PORTAL_ITEM = "Progressive Sanctum Portal"
+PROGRESSIVE_TUUL_PORTAL_ITEM = "Progressive Tuul Portal"
+PROGRESSIVE_SANCTUM_PORTAL_COUNT = 11
+PROGRESSIVE_TUUL_PORTAL_COUNT = 3
+
+PROGRESSIVE_SANCTUM_PORTAL_ORDER = (
+    "Outer Sanctum Portal",
+    "Arcwood Pass Portal",
+    "Sanctum Catacombs lvl 1 Portal",
+    "Sanctum Catacombs lvl 2 Portal",
+    "Sanctum Catacombs lvl 3 Portal",
+    "Effold Terrace Portal",
+    "Crescent Road Portal",
+    "Luvora Garden Portal",
+    "Crescent Keep Portal",
+    "Crescent Grove lvl 1 Portal",
+    "Crescent Grove lvl 2 Portal",
+)
+
+PROGRESSIVE_TUUL_PORTAL_ORDER = (
+    "Tuul Valley Portal",
+    "Tuul Enclave Portal",
+    "Bularr Fortress Portal",
+)
+
+# Minimum progressive line counts per named portal (must match ArchipelagoGameDataTables.cs).
+PORTAL_PROGRESSIVE_REQUIREMENTS: Dict[str, Tuple[int, int]] = {
+    "Outer Sanctum Portal": (1, 0),
+    "Arcwood Pass Portal": (2, 0),
+    "Sanctum Catacombs lvl 1 Portal": (3, 0),
+    "Sanctum Catacombs lvl 2 Portal": (4, 0),
+    "Sanctum Catacombs lvl 3 Portal": (5, 0),
+    "Effold Terrace Portal": (6, 0),
+    "Tuul Valley Portal": (6, 1),
+    "Crescent Road Portal": (7, 1),
+    "Luvora Garden Portal": (8, 1),
+    "Crescent Keep Portal": (9, 1),
+    "Tuul Enclave Portal": (9, 2),
+    "Crescent Grove lvl 1 Portal": (10, 2),
+    "Crescent Grove lvl 2 Portal": (11, 2),
+    "Bularr Fortress Portal": (11, 3),
+}
 
 # All AP shop rows unlock together at Catacombs lvl 2 (crown grind band). Playtest gate; may split per-slot later.
 SHOP_AP_ITEMS_PORTAL_GATE = "sanctum_catacombs_f2"
@@ -18,9 +62,9 @@ SHOP_SLOT_TIER_LEVELS = (4, 8, 12, 16, 20)
 REGION_ENTRANCE_STORY_QUEST: Dict[str, str] = {
     "Effold Terrace": "Communing Catacombs",
     "Sanctum Catacombs lvl 1": "Communing Catacombs",
-    "Cresent Road": "The Keep Within",
+    "Crescent Road": "The Keep Within",
     "Bularr Fortress": "Finding Ammagon",
-    "Cresent Grove lvl 1": "The Keep Within",
+    "Crescent Grove lvl 1": "The Keep Within",
 }
 
 # Gameplay access (grind spawns, fishing spots): same gates plus deeper zones on those routes.
@@ -28,7 +72,7 @@ AREA_STORY_QUEST: Dict[str, str] = {
     **REGION_ENTRANCE_STORY_QUEST,
     "Sanctum Catacombs lvl 2": "Communing Catacombs",
     "Sanctum Catacombs lvl 3": "Communing Catacombs",
-    "Cresent Grove lvl 2": "The Keep Within",
+    "Crescent Grove lvl 2": "The Keep Within",
 }
 
 # Off-Sanctum shop merchants that sit behind story routes (portal gate alone is not enough).
@@ -55,6 +99,11 @@ SHOP_MERCHANT_GATE = {
     "Rikko's Treasures": "crescent_grove_colossus",
     "Cotoo's Treasures": "crescent_grove_lvl2",
 }
+
+
+def progressive_requirements_for_portal(portal_name: str) -> Tuple[int, int]:
+    """Minimum sanctum/tuul progressive counts to unlock a named portal in progressive mode."""
+    return PORTAL_PROGRESSIVE_REQUIREMENTS.get(portal_name, (0, 0))
 
 
 def shop_ap_items_portal_gate() -> str:

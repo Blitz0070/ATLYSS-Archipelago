@@ -38,13 +38,13 @@ def gen_create_regions(world):
         "Sanctum Catacombs lvl 1": Region("Sanctum Catacombs lvl 1", world.player, world.multiworld),
         "Sanctum Catacombs lvl 2": Region("Sanctum Catacombs lvl 2", world.player, world.multiworld),
         "Sanctum Catacombs lvl 3": Region("Sanctum Catacombs lvl 3", world.player, world.multiworld),
-        "Cresent Road": Region("Cresent Road", world.player, world.multiworld),
+        "Crescent Road": Region("Crescent Road", world.player, world.multiworld),
         "Tuul Enclave": Region("Tuul Enclave", world.player, world.multiworld),
         "Luvora Garden": Region("Luvora Garden", world.player, world.multiworld),
-        "Cresent Keep": Region("Cresent Keep", world.player, world.multiworld),
+        "Crescent Keep": Region("Crescent Keep", world.player, world.multiworld),
         "Bularr Fortress": Region("Bularr Fortress", world.player, world.multiworld),
-        "Cresent Grove lvl 1": Region("Cresent Grove lvl 1", world.player, world.multiworld),
-        "Cresent Grove lvl 2": Region("Cresent Grove lvl 2", world.player, world.multiworld),
+        "Crescent Grove lvl 1": Region("Crescent Grove lvl 1", world.player, world.multiworld),
+        "Crescent Grove lvl 2": Region("Crescent Grove lvl 2", world.player, world.multiworld),
     }
 
     region_map["Menu"].connect(region_map["Sanctum"], rule=lambda state: True)
@@ -68,23 +68,23 @@ def gen_create_regions(world):
         rule=region_rule(player, "Sanctum Catacombs lvl 3"),
     )
     region_map["Arcwood Pass"].connect(
-        region_map["Cresent Road"],
-        rule=region_rule(player, "Cresent Road", _story_quest_gate(player, "Cresent Road")),
+        region_map["Crescent Road"],
+        rule=region_rule(player, "Crescent Road", _story_quest_gate(player, "Crescent Road")),
     )
     region_map["Tuul Valley"].connect(region_map["Tuul Enclave"], rule=region_rule(player, "Tuul Enclave"))
-    region_map["Cresent Road"].connect(region_map["Luvora Garden"], rule=region_rule(player, "Luvora Garden"))
-    region_map["Cresent Road"].connect(region_map["Cresent Keep"], rule=region_rule(player, "Cresent Keep"))
+    region_map["Crescent Road"].connect(region_map["Luvora Garden"], rule=region_rule(player, "Luvora Garden"))
+    region_map["Crescent Road"].connect(region_map["Crescent Keep"], rule=region_rule(player, "Crescent Keep"))
     region_map["Tuul Enclave"].connect(
         region_map["Bularr Fortress"],
         rule=region_rule(player, "Bularr Fortress", _story_quest_gate(player, "Bularr Fortress")),
     )
-    region_map["Cresent Keep"].connect(
-        region_map["Cresent Grove lvl 1"],
-        rule=region_rule(player, "Cresent Grove lvl 1", _story_quest_gate(player, "Cresent Grove lvl 1")),
+    region_map["Crescent Keep"].connect(
+        region_map["Crescent Grove lvl 1"],
+        rule=region_rule(player, "Crescent Grove lvl 1", _story_quest_gate(player, "Crescent Grove lvl 1")),
     )
-    region_map["Cresent Grove lvl 1"].connect(
-        region_map["Cresent Grove lvl 2"],
-        rule=region_rule(player, "Cresent Grove lvl 2"),
+    region_map["Crescent Grove lvl 1"].connect(
+        region_map["Crescent Grove lvl 2"],
+        rule=region_rule(player, "Crescent Grove lvl 2"),
     )
 
     if options.shop_sanity:

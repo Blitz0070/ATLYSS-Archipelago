@@ -14,12 +14,12 @@ from .QuestAccess import get_area_portal_gate, get_portal_gate, get_quest_rule_m
 # Portal access (YAML: random_portals) — used by region routes and QuestAccess.py
 #
 # random_portals: has_area() -> QuestAccess.AREA_TO_GATE -> has_portal_gate() (full hub chain).
-# progressive: has_area() -> portal_counts (same unlock order as PORTAL_GATES).
+# progressive: has_area() -> PORTAL_GATES via AREA_TO_GATE (Sanctum + Tuul lines).
 # has_area_for_gameplay(): has_area + AccessData.AREA_STORY_QUEST (matches Regions.py).
 #
 # Progressive unlock order:
-#   1 Outer  2 Arcwood  3–5 Catacombs lvl 1–3  6 Effold  7 Tuul  8 Road
-#   9 Luvora  10 Keep  11 Enclave  12 Grove lvl 1  13 Grove lvl 2  14 Bularr
+# Sanctum line (11): Outer, Arcwood, Catacombs 1–3, Effold, Road, Luvora, Keep, Grove 1–2
+# Tuul line (3): Tuul Valley, Tuul Enclave, Bularr Fortress
 # =============================================================================
 
 def _use_random_portals(state, player) -> bool:
@@ -30,20 +30,27 @@ def has_named_portals(state, player, portal_items: tuple) -> bool:
     return all(state.has(portal, player, 1) for portal in portal_items)
 
 
-def has_progressive_portals(state, player, unlock_count: int) -> bool:
-    return state.has("Progressive Portal", player, unlock_count)
+def has_progressive_portal_lines(state, player, sanctum_count: int, tuul_count: int) -> bool:
+    from .AccessData import PROGRESSIVE_SANCTUM_PORTAL_ITEM, PROGRESSIVE_TUUL_PORTAL_ITEM
+
+    return (
+        state.has(PROGRESSIVE_SANCTUM_PORTAL_ITEM, player, sanctum_count)
+        and state.has(PROGRESSIVE_TUUL_PORTAL_ITEM, player, tuul_count)
+    )
 
 
-def has_portal_access(state, player, random_portal_items: tuple, progressive_unlock_count: int) -> bool:
+def has_portal_access(
+    state, player, random_portal_items: tuple, progressive_sanctum: int, progressive_tuul: int,
+) -> bool:
     if _use_random_portals(state, player):
         return has_named_portals(state, player, random_portal_items)
-    return has_progressive_portals(state, player, progressive_unlock_count)
+    return has_progressive_portal_lines(state, player, progressive_sanctum, progressive_tuul)
 
 
 def has_portal_gate(state, player, gate_id: str) -> bool:
     """Shared portal access profile from QuestAccess.PORTAL_GATES."""
-    random_items, progressive = get_portal_gate(gate_id)
-    return has_portal_access(state, player, random_items, progressive)
+    random_items, sanctum_prog, tuul_prog = get_portal_gate(gate_id)
+    return has_portal_access(state, player, random_items, sanctum_prog, tuul_prog)
 
 
 def has_quest(state, player, quest) -> bool:
@@ -202,7 +209,13 @@ def has_area(state, player, area) -> bool:
     if area == "Sanctum":
         return True
     if not _use_random_portals(state, player):
-        return state.has("Progressive Portal", player, portal_counts[area])
+        gate_id = get_area_portal_gate(area)
+        if gate_id is not None:
+            return has_portal_gate(state, player, gate_id)
+        from .AccessData import progressive_requirements_for_portal
+
+        sanctum, tuul = progressive_requirements_for_portal(f"{area} Portal")
+        return has_progressive_portal_lines(state, player, sanctum, tuul)
     gate_id = get_area_portal_gate(area)
     if gate_id is not None:
         return has_portal_gate(state, player, gate_id)
@@ -244,7 +257,7 @@ def has_fishing_mid_route(state, player) -> bool:
 def has_fishing_high_route(state, player) -> bool:
     return (
         has_area_for_gameplay(state, player, "Sanctum Catacombs lvl 1")
-        and has_area_for_gameplay(state, player, "Cresent Road")
+        and has_area_for_gameplay(state, player, "Crescent Road")
         and has_area_for_gameplay(state, player, "Effold Terrace")
     )
 

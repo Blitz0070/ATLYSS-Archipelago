@@ -33,8 +33,9 @@ class Goal(Choice):
 class RandomPortals(Toggle):
     """
 	How area portals are unlocked.
-	Off (default): Progressive Portals - find "Progressive Portal" items to unlock
-	areas in a fixed sequence. Each portal found opens the next area in order.
+	Off (default): Progressive Portals - find "Progressive Sanctum Portal" and
+	"Progressive Tuul Portal" items (two lines). Sanctum line unlocks most areas;
+	Tuul line unlocks Tuul Valley, Tuul Enclave, and Bularr Fortress.
 	On: Random Portals - find individual portal items (e.g. "Outer Sanctum Portal",
 	"Sanctum Catacombs lvl 1 Portal", etc.) to unlock specific areas and dungeon floors independently.
 	"""

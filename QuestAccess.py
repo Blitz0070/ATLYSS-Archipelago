@@ -5,7 +5,7 @@ PORTAL_GATES are reusable portal-route profiles. Any rule that needs a specific
 route (quests, shops, achievements, bosses, professions) should reference the
 same gate id instead of rebuilding named/progressive portal logic locally.
 
-See Rules.py header for progressive portal order (1=Outer … 14=Bularr).
+Progressive mode: two lines (Sanctum 11, Tuul 3). Gates store (sanctum_count, tuul_count).
 """
 from __future__ import annotations
 
@@ -22,86 +22,84 @@ OUTER_SANCTUM_PORTAL = "Outer Sanctum Portal"
 CATACOMBS_LVL1_PORTAL = "Sanctum Catacombs lvl 1 Portal"
 CATACOMBS_LVL2_PORTAL = "Sanctum Catacombs lvl 2 Portal"
 CATACOMBS_LVL3_PORTAL = "Sanctum Catacombs lvl 3 Portal"
-GROVE_LVL1_PORTAL = "Cresent Grove lvl 1 Portal"
-GROVE_LVL2_PORTAL = "Cresent Grove lvl 2 Portal"
+GROVE_LVL1_PORTAL = "Crescent Grove lvl 1 Portal"
+GROVE_LVL2_PORTAL = "Crescent Grove lvl 2 Portal"
 
-# (random_mode_portal_items, progressive_unlock_count)
-# Random mode: every gate below includes Outer Sanctum (hub exit). Progressive
-# mode: unlock count only (Outer is always unlock #1 in the chain).
-PortalGate = Tuple[Tuple[str, ...], int]
+# (random_mode_portal_items, progressive_sanctum_count, progressive_tuul_count)
+PortalGate = Tuple[Tuple[str, ...], int, int]
 
 # Gate ids name portals/areas, not story beats.
 PORTAL_GATES: Dict[str, PortalGate] = {
-    "outer_sanctum": ((OUTER_SANCTUM_PORTAL,), 1),
-    "arcwood_pass": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal"), 2),
+    "outer_sanctum": ((OUTER_SANCTUM_PORTAL,), 1, 0),
+    "arcwood_pass": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal"), 2, 0),
     "sanctum_catacombs": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL), 3,
+        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL), 3, 0,
     ),
     "sanctum_catacombs_f2": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL), 4,
+        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL), 4, 0,
     ),
     "sanctum_catacombs_f3": (
         (
             OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal",
             CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL, CATACOMBS_LVL3_PORTAL,
         ),
-        5,
+        5, 0,
     ),
-    "effold_terrace": ((OUTER_SANCTUM_PORTAL, "Effold Terrace Portal"), 6),
-    "tuul_valley": ((OUTER_SANCTUM_PORTAL, "Tuul Valley Portal"), 7),
-    "crescent_road": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal"), 8),
+    "effold_terrace": ((OUTER_SANCTUM_PORTAL, "Effold Terrace Portal"), 6, 0),
+    "tuul_valley": ((OUTER_SANCTUM_PORTAL, "Tuul Valley Portal"), 6, 1),
+    "crescent_road": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal"), 7, 1),
     "crescent_keep": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal"), 10,
+        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal"), 9, 1,
     ),
-    "tuul_enclave": ((OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Tuul Enclave Portal"), 11),
-    "luvora_garden": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Luvora Garden Portal"), 9),
+    "tuul_enclave": ((OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Tuul Enclave Portal"), 9, 2),
+    "luvora_garden": ((OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Luvora Garden Portal"), 8, 1),
     "crescent_grove_colossus": (
         (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", GROVE_LVL1_PORTAL
+            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", GROVE_LVL1_PORTAL
         ),
-        12,
+        10, 2,
     ),
     "crescent_grove_lvl2": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", GROVE_LVL1_PORTAL, GROVE_LVL2_PORTAL), 13,
+        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", GROVE_LVL1_PORTAL, GROVE_LVL2_PORTAL), 11, 2,
     ),
     "bularr_fortress": (
         (
             OUTER_SANCTUM_PORTAL, "Tuul Valley Portal",
             "Tuul Enclave Portal", "Bularr Fortress Portal",
         ),
-        14,
+        11, 3,
     ),
     "craft_mekspear": (
         (
             OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Effold Terrace Portal",
         ),
-        7,
+        6, 1,
     ),
     "craft_wizwand": (
         (
-            OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Arcwood Pass Portal", "Cresent Road Portal", 
+            OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Arcwood Pass Portal", "Crescent Road Portal",
         ),
-        8,
+        7, 1,
     ),
     "craft_vile_blade": (
         (
             OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL,
-            "Cresent Road Portal", "Effold Terrace Portal",
+            "Crescent Road Portal", "Effold Terrace Portal",
         ),
-        8,
+        7, 1,
     ),
     "craft_golem_chest": (
         (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal"
+            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal"
         ),
-        10,
+        9, 1,
     ),
     "glyphik_route": (
         (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Cresent Road Portal", "Cresent Keep Portal", "Luvora Garden Portal", "Tuul Valley Portal", "Tuul Enclave Portal",
+            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", "Luvora Garden Portal", "Tuul Valley Portal", "Tuul Enclave Portal",
             GROVE_LVL1_PORTAL, GROVE_LVL2_PORTAL, "Bularr Fortress Portal",
         ),
-        14,
+        11, 3,
     ),
 }
 
@@ -114,12 +112,12 @@ AREA_TO_GATE: Dict[str, str] = {
     "Sanctum Catacombs lvl 3": "sanctum_catacombs_f3",
     "Effold Terrace": "effold_terrace",
     "Tuul Valley": "tuul_valley",
-    "Cresent Road": "crescent_road",
+    "Crescent Road": "crescent_road",
     "Luvora Garden": "luvora_garden",
-    "Cresent Keep": "crescent_keep",
+    "Crescent Keep": "crescent_keep",
     "Tuul Enclave": "tuul_enclave",
-    "Cresent Grove lvl 1": "crescent_grove_colossus",
-    "Cresent Grove lvl 2": "crescent_grove_lvl2",
+    "Crescent Grove lvl 1": "crescent_grove_colossus",
+    "Crescent Grove lvl 2": "crescent_grove_lvl2",
     "Bularr Fortress": "bularr_fortress",
 }
 
@@ -137,9 +135,9 @@ def _random_portals_for_gate(random_items: tuple) -> tuple:
 
 
 def get_portal_gate(gate_id: str) -> PortalGate:
-    """Return (random named portals, progressive count) for a shared gate id."""
-    random_items, progressive = PORTAL_GATES[gate_id]
-    return _random_portals_for_gate(random_items), progressive
+    """Return (random named portals, sanctum prog count, tuul prog count) for a gate id."""
+    random_items, sanctum, tuul = PORTAL_GATES[gate_id]
+    return _random_portals_for_gate(random_items), sanctum, tuul
 
 # quest_name -> (min_level, after_quest, portal_gate_id) — gate ids match PORTAL_GATES keys
 QUEST_ACCESS: Dict[str, Tuple[int, Optional[str], Optional[str]]] = {
@@ -164,9 +162,9 @@ QUEST_ACCESS: Dict[str, Tuple[int, Optional[str], Optional[str]]] = {
     "Ghostly Goods": (1, "A Warm Welcome", "sanctum_catacombs"),
     "Killing Tomb": (1, None, "sanctum_catacombs"),
     "Summore' Spectral Powder!": (1, "Ghostly Goods", "sanctum_catacombs"),
-    "The Voice of Zuulneruda": (6, "Killing Tomb", "sanctum_catacombs"),
-    "Purging the Undead": (6, "Killing Tomb", "sanctum_catacombs"),
-    "Rattlecage Rage": (6, "Killing Tomb", "sanctum_catacombs"),
+    "The Voice of Zuulneruda": (6, "Killing Tomb", "sanctum_catacombs_f2"),
+    "Purging the Undead": (6, "Killing Tomb", "sanctum_catacombs_f2"),
+    "Rattlecage Rage": (6, "Killing Tomb", "sanctum_catacombs_f2"),
     "Consumed Madness": (12, "The Voice of Zuulneruda", "sanctum_catacombs_f2"),
     "Eradicating the Undead": (12, "The Voice of Zuulneruda", "sanctum_catacombs_f2"),
     "Call of Fury": (4, None, "outer_sanctum"),
@@ -247,9 +245,9 @@ FISHING_ROD_REQUIRED_QUESTS = frozenset(
 
 def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Optional[str]):
     if gate_id:
-        random_items, progressive = get_portal_gate(gate_id)
+        random_items, sanctum_prog, tuul_prog = get_portal_gate(gate_id)
     else:
-        random_items, progressive = (), 0
+        random_items, sanctum_prog, tuul_prog = (), 0, 0
 
     def rule(state):
         from .Rules import can_grind_level, has_portal_access, has_quest
@@ -259,7 +257,7 @@ def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Opt
         if after is not None and not has_quest(state, player, after):
             return False
         if gate_id is not None:
-            if not has_portal_access(state, player, random_items, progressive):
+            if not has_portal_access(state, player, random_items, sanctum_prog, tuul_prog):
                 return False
         return True
 

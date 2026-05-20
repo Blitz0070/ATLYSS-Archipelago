@@ -51,13 +51,10 @@ CLASS_FILTER_CLASSES = {
 }
 
 item_counts_useful = {
-	"Tome of Naivety": 2,
-	"Tome of Unlearning": 2,
 	"Agility Stone": 1,
 	"Angela's Tear": 1,
 	"Flux Stone": 1,
 	"Might Stone": 1,
-	"Soul Pearl": 1
 }
 
 item_counts_filler = {
@@ -531,13 +528,13 @@ portals = [
 	"Sanctum Catacombs lvl 1 Portal",
 	"Sanctum Catacombs lvl 2 Portal",
 	"Sanctum Catacombs lvl 3 Portal",
-	"Cresent Road Portal",
+	"Crescent Road Portal",
 	"Tuul Enclave Portal",
 	"Luvora Garden Portal",
-	"Cresent Keep Portal",
+	"Crescent Keep Portal",
 	"Bularr Fortress Portal",
-	"Cresent Grove lvl 1 Portal",
-	"Cresent Grove lvl 2 Portal",
+	"Crescent Grove lvl 1 Portal",
+	"Crescent Grove lvl 2 Portal",
 ]
 
 item_table = {
@@ -549,7 +546,8 @@ item_table = {
 	**{item: ItemClassification.useful for item in useful_items},
 	**{item: ItemClassification.progression for item in progression_items},
 	**{item: ItemClassification.progression for item in portals},
-	"Progressive Portal": ItemClassification.progression
+	"Progressive Sanctum Portal": ItemClassification.progression,
+	"Progressive Tuul Portal": ItemClassification.progression,
 }
 
 raw_items = [item for item, classification in item_table.items()]
@@ -643,8 +641,16 @@ def gen_create_items(world):
 		for item in portals:
 			_append_item(item, required=True)
 	else:
-		for _ in range(14):
-			_append_item("Progressive Portal", required=True)
+		from .AccessData import (
+			PROGRESSIVE_SANCTUM_PORTAL_COUNT,
+			PROGRESSIVE_SANCTUM_PORTAL_ITEM,
+			PROGRESSIVE_TUUL_PORTAL_COUNT,
+			PROGRESSIVE_TUUL_PORTAL_ITEM,
+		)
+		for _ in range(PROGRESSIVE_SANCTUM_PORTAL_COUNT):
+			_append_item(PROGRESSIVE_SANCTUM_PORTAL_ITEM, required=True)
+		for _ in range(PROGRESSIVE_TUUL_PORTAL_COUNT):
+			_append_item(PROGRESSIVE_TUUL_PORTAL_ITEM, required=True)
 
 	if gated and world.location_count > 0:
 		tier_budgets = compute_tier_budgets(world)
