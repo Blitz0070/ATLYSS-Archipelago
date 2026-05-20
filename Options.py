@@ -111,7 +111,7 @@ class ProfessionTools(Choice):
 class ExperienceMultiplier(Choice):
     """
 	How fast you gain experience in-game (Atlyss mod).
-	Scales XP from killing creeps, completing quests, and using XP tomes.
+	Scales XP from killing creeps and completing quests only (not XP tomes).
 	Does not change crown income or shop prices. Higher XP still helps you reach
 	Reach Level checks sooner.
 	Same tiers as Crown Multiplier (x8 / x4 / x2 / x1 / x0.75 / x0.5).
