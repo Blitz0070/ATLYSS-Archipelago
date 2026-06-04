@@ -13,7 +13,7 @@ from .ProgressionLogic import (
     prefill_tiered_equipment,
     rebalance_gated_pool_for_junk_slots,
 )
-from typing import *
+from typing import ClassVar
 
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
@@ -35,9 +35,7 @@ class AtlyssWeb(WebWorld):
 
 
 class Atlyss(World):
-    """
-	Atlyss
-	"""
+    """Atlyss"""
     game = "Atlyss"
     web = AtlyssWeb()
     options_dataclass = AtlyssOptions

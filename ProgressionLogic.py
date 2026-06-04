@@ -247,7 +247,9 @@ def prefill_tiered_equipment(world) -> None:
         if not placed:
             remaining_pool.append(_random_filler_item(world))
 
-    world.multiworld.itempool = remaining_pool
+    pool = world.multiworld.itempool
+    pool.clear()
+    pool.extend(remaining_pool)
 
 
 def _random_filler_item(world):
