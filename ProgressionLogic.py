@@ -254,11 +254,9 @@ def prefill_tiered_equipment(world) -> None:
 
 
 def _random_filler_item(world):
-    from .Items import filler_weights
+    from .Items import pick_filler_item_name
 
-    names = list(filler_weights.keys())
-    weights = list(filler_weights.values())
-    return world.create_item(world.random.choices(names, weights)[0])
+    return world.create_item(pick_filler_item_name(world.random))
 
 
 def _item_can_fit_unfilled_location(world, item: Item, loc) -> bool:

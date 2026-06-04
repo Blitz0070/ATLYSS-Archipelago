@@ -84,6 +84,10 @@ class Atlyss(World):
     def create_item(self, name: str):
         return Item(name, item_table[name], self.item_name_to_id[name], self.player)
 
+    def get_filler_item_name(self) -> str:
+        from .Items import pick_filler_item_name
+        return pick_filler_item_name(self.random)
+
     def create_items(self):
         gen_create_items(self)
 

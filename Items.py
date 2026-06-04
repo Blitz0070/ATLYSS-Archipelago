@@ -553,12 +553,18 @@ def _is_filler_item_name(name: str) -> bool:
 	return item_table[name] == ItemClassification.filler
 
 
+def pick_filler_item_name(rng) -> str:
+	"""Weighted repeatable filler for AP pool top-up and gated rebalance."""
+	names = list(filler_weights.keys())
+	weights = list(filler_weights.values())
+	return rng.choices(names, weights)[0]
+
+
 def _class_filter_allows_progressive(filter_value: int, class_name: str) -> bool:
 	return class_name in CLASS_FILTER_CLASSES.get(filter_value, CLASS_FILTER_CLASSES[0])
 
 
-def _balance_gated_pool(world, pool, max_non_filler: int, junk_count: int,
-                        filler_names, filler_weightings, random) -> None:
+def _balance_gated_pool(world, pool, max_non_filler: int, junk_count: int, random) -> None:
 	"""Ensure junk slots can receive filler and cap optional useful items."""
 	player = world.player
 	replaceable = [
@@ -578,7 +584,7 @@ def _balance_gated_pool(world, pool, max_non_filler: int, junk_count: int,
 			break
 		item = replaceable.pop()
 		idx = pool.index(item)
-		pool[idx] = world.create_item(random.choices(filler_names, filler_weightings)[0])
+		pool[idx] = world.create_item(pick_filler_item_name(random))
 
 
 def gen_create_items(world):
@@ -603,9 +609,6 @@ def gen_create_items(world):
 		world.location_count -= 1
 		if not is_filler:
 			non_filler_count += 1
-
-	filler_item_names = [key for key, value in filler_weights.items()]
-	filler_weightings = [value for key, value in filler_weights.items()]
 
 	if gated:
 		for item, amt in any_progressives.items():
@@ -678,7 +681,7 @@ def gen_create_items(world):
 			_append_item(item_name)
 
 	if gated:
-		_balance_gated_pool(world, pool, max_non_filler, junk_count, filler_item_names, filler_weightings, random)
+		_balance_gated_pool(world, pool, max_non_filler, junk_count, random)
 
 	for _ in range(world.location_count):
-		pool.append(world.create_item(random.choices(filler_item_names, filler_weightings)[0]))
+		pool.append(world.create_item(pick_filler_item_name(random)))
