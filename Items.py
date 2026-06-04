@@ -549,6 +549,26 @@ item_table = {
 
 raw_items = [item for item, classification in item_table.items()]
 
+from typing import Dict, Set
+
+item_name_groups: Dict[str, Set[str]] = {
+	"Filler": set(filler_items),
+	"Portals": set(portals) | {"Progressive Sanctum Portal", "Progressive Tuul Portal"},
+	"Crowns": {name for name in item_table if name.startswith("Crowns (")},
+	"Tomes": {name for name in item_table if name.startswith("Tome of ")},
+	"Progressive Any": set(any_progressives.keys()),
+	"Progressive Fighter": set(fighter_progressives.keys()),
+	"Progressive Mystic": set(mystic_progressives.keys()),
+	"Progressive Bandit": set(bandit_progressives.keys()),
+	"Progression": (
+		set(progression_items)
+		| set(portals)
+		| {"Progressive Sanctum Portal", "Progressive Tuul Portal"}
+	),
+	"Useful Equipment": set(useful_items) | set(item_counts_useful.keys()),
+	"Profession Tools": {item_name for item_name, _ in PROFESSION_TOOL_BUYS},
+}
+
 def _is_filler_item_name(name: str) -> bool:
 	return item_table[name] == ItemClassification.filler
 

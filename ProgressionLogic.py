@@ -11,7 +11,7 @@ from worlds.generic.Rules import add_item_rule
 from .AccessData import parse_shop_buy_location, shop_slot_tier_level
 from .GoalScope import _get_location_min_grind_levels
 from .ItemTiers import get_item_tier, get_progressive_item_tiers
-from .Locations import location_grind_data
+from .Locations import _HIGH_LEVEL_JUNK_MILESTONES, location_grind_data
 
 
 def level_to_max_tier(level: int) -> int:
@@ -30,9 +30,6 @@ REGION_MAX_TIER: dict[str, int] = {
     area_name: level_to_max_tier(max_level)
     for area_name, _min_level, max_level in location_grind_data
 }
-
-_HIGH_LEVEL_JUNK_MILESTONES = frozenset({"Reach Level 28", "Reach Level 30", "Reach Level 32"})
-
 
 def is_junk_only_location(location_name: str) -> bool:
     return (

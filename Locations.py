@@ -313,3 +313,19 @@ portal_counts = {
 	"Crescent Grove lvl 2": 13,
 	"Bularr Fortress": 14,
 }
+
+from typing import Dict, Set
+
+# Gated equipment: fishing/mining milestones and late level checks accept filler only.
+_HIGH_LEVEL_JUNK_MILESTONES = frozenset({"Reach Level 28", "Reach Level 30", "Reach Level 32"})
+
+location_name_groups: Dict[str, Set[str]] = {
+	"Quests": {name for name, _region in quests},
+	"Levels": {name for name, _region in levels},
+	"Shops": {name for name, _region in merchants},
+	"Professions": {name for name, _region in professions},
+	"Achievements": {name for name, _region in achievements},
+	"Bosses": {name for name, _region in bosses},
+	"Profession Tool Buys": {name for name, _item in PROFESSION_TOOL_BUYS},
+	"Junk Slots": {name for name, _region in professions} | set(_HIGH_LEVEL_JUNK_MILESTONES),
+}

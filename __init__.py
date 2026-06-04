@@ -41,6 +41,8 @@ class Atlyss(World):
     settings: ClassVar[AtlyssSettings]
     location_name_to_id = {value: location_dict.index(value) + 1 for value in location_dict}
     item_name_to_id = {value: raw_items.index(value) + 1 for value in raw_items}
+    item_name_groups = item_name_groups
+    location_name_groups = location_name_groups
     topology_present = True
     ut_can_gen_without_yaml = True
     gen_puml = False
