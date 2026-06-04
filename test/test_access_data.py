@@ -101,3 +101,29 @@ class TestAccessData(unittest.TestCase):
         self.assertGreaterEqual(get_location_max_tier("Skill Student", "Sanctum"), 2)
         self.assertEqual(get_location_max_tier("Killing Tomb", "Arcwood Pass"), 1)
         self.assertEqual(get_location_max_tier("Buy Item #1 from Sally's Nook", "Sanctum"), 1)
+
+    def test_useful_item_name_fits_unfilled_respects_per_location_tier(self) -> None:
+        from worlds.atlyss.ProgressionLogic import (
+            _location_max_tier,
+            _non_junk_unfilled_locations,
+            _useful_item_name_fits_unfilled,
+        )
+
+        class _Region:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+        class _Loc:
+            def __init__(self, name: str, region_name: str) -> None:
+                self.name = name
+                self.parent_region = _Region(region_name)
+
+        unfilled = [
+            _Loc("Night Spirits", "Sanctum"),
+            _Loc("Reach Level 4", "Menu"),
+            _Loc("Fishing Lv. 1", "Menu"),
+        ]
+        non_junk = _non_junk_unfilled_locations(unfilled)
+        self.assertEqual(_location_max_tier(non_junk[0]), 1)
+        self.assertTrue(_useful_item_name_fits_unfilled("Ragged Shirt", non_junk))
+        self.assertFalse(_useful_item_name_fits_unfilled("Iron Katars", non_junk))

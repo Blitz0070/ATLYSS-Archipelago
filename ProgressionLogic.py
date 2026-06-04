@@ -258,6 +258,22 @@ def _random_filler_item(world):
     return world.create_item(pick_filler_item_name(world.random))
 
 
+def _location_max_tier(location) -> int:
+    region_name = location.parent_region.name if location.parent_region else "Menu"
+    return get_location_max_tier(location.name, region_name)
+
+
+def _non_junk_unfilled_locations(unfilled):
+    return [loc for loc in unfilled if not is_junk_only_location(loc.name)]
+
+
+def _useful_item_name_fits_unfilled(name: str, non_junk_unfilled) -> bool:
+    tier = get_item_tier(name)
+    if tier is None:
+        return bool(non_junk_unfilled)
+    return any(tier <= _location_max_tier(loc) for loc in non_junk_unfilled)
+
+
 def _item_can_fit_unfilled_location(world, item: Item, loc) -> bool:
     player = world.player
     if item.player != player:
@@ -269,12 +285,35 @@ def _item_can_fit_unfilled_location(world, item: Item, loc) -> bool:
     tier = get_item_tier(item.name)
     if tier is None:
         return True
-    region_name = loc.parent_region.name if loc.parent_region else "Menu"
-    return tier <= get_location_max_tier(loc.name, region_name)
+    return tier <= _location_max_tier(loc)
+
+
+def _fit_useful_item_for_unfilled(world, unfilled) -> Item:
+    """Useful item that can fill at least one remaining non-junk check (gated tier rules)."""
+    from .ItemClassAffinity import item_passes_class_filter
+    from .Items import useful_items
+
+    class_filter = world.options.class_filter.value
+    non_junk = _non_junk_unfilled_locations(unfilled)
+    candidates = [
+        name for name in useful_items
+        if item_passes_class_filter(class_filter, name)
+        and _useful_item_name_fits_unfilled(name, non_junk)
+    ]
+    if candidates:
+        return world.create_item(world.random.choice(candidates))
+    tier1 = [
+        name for name in useful_items
+        if item_passes_class_filter(class_filter, name)
+        and get_item_tier(name) == 1
+    ]
+    if tier1:
+        return world.create_item(world.random.choice(tier1))
+    return _safe_pool_useful_item(world)
 
 
 def _safe_pool_useful_item(world):
-    """Low-tier useful for gated pool rebalance (not item_counts_useful — those are gen-only)."""
+    """Low-tier useful for unrestricted pool rebalance (not item_counts_useful — gen-only)."""
     from .ItemClassAffinity import item_passes_class_filter
     from .Items import useful_items
 
@@ -366,14 +405,21 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
             continue
         break
 
-    unfilled = list(world.multiworld.get_unfilled_locations(player))
-    for idx, item in enumerate(pool):
-        if item.player != player or _item_fits_any_unfilled(world, item, unfilled):
-            continue
-        if count_filler() < junk_unfilled:
-            pool[idx] = _random_filler_item(world)
-        else:
-            pool[idx] = _safe_pool_useful_item(world)
+    for _ in range(len(pool) * 2):
+        unfilled = list(world.multiworld.get_unfilled_locations(player))
+        changed = False
+        for idx, item in enumerate(pool):
+            if item.player != player or _item_fits_any_unfilled(world, item, unfilled):
+                continue
+            changed = True
+            if count_filler() < junk_unfilled:
+                pool[idx] = _random_filler_item(world)
+            elif gated:
+                pool[idx] = _fit_useful_item_for_unfilled(world, unfilled)
+            else:
+                pool[idx] = _safe_pool_useful_item(world)
+        if not changed:
+            break
 
 def apply_progression_rules(world) -> None:
     set_profession_junk_rules(world)
