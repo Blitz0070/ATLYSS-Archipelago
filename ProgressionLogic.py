@@ -149,8 +149,8 @@ def set_profession_junk_rules(world) -> None:
 
 
 def set_gated_filler_reserved_for_junk_rules(world) -> None:
-    """Gated: filler may only fill fishing/mining checks, not shops or quests."""
-    if world.options.equipment_progression.value != 0:
+    """Filler may only fill junk-only checks so mining/fishing/late levels get pool filler."""
+    if count_junk_locations(world) == 0:
         return
     player = world.player
     for region in world.multiworld.regions:
@@ -304,15 +304,19 @@ def _item_fits_any_unfilled(world, item: Item, unfilled) -> bool:
 
 def rebalance_gated_pool_for_junk_slots(world) -> None:
     """After pre_fill, match pool filler/non-filler counts to unfilled slot types."""
-    if world.options.equipment_progression.value != 0:
+    if count_junk_locations(world) == 0:
         return
 
     player = world.player
     pool = world.multiworld.itempool
+    gated = world.options.equipment_progression.value == 0
 
-    for idx, item in enumerate(pool):
-        if item.player == player and (get_item_tier(item.name) is not None or get_progressive_item_tiers(item.name) is not None):
-            pool[idx] = _random_filler_item(world)
+    if gated:
+        for idx, item in enumerate(pool):
+            if item.player == player and (
+                get_item_tier(item.name) is not None or get_progressive_item_tiers(item.name) is not None
+            ):
+                pool[idx] = _random_filler_item(world)
 
     unfilled = list(world.multiworld.get_unfilled_locations(player))
     junk_unfilled = sum(1 for loc in unfilled if is_junk_only_location(loc.name))
@@ -373,6 +377,6 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
 
 def apply_progression_rules(world) -> None:
     set_profession_junk_rules(world)
+    set_gated_filler_reserved_for_junk_rules(world)
     if world.options.equipment_progression.value == 0:
-        set_gated_filler_reserved_for_junk_rules(world)
         set_equipment_item_rules(world)
