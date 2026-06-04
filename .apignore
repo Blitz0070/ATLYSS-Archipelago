@@ -3,4 +3,6 @@ __pycache__/
 *$py.class
 .idea/
 .git/
+.cursor/
 scripts/
+test/
