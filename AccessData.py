@@ -2,7 +2,7 @@
 Shared access tables for Rules, ProgressionLogic, GoalScope, and Regions.
 
 Shop AP row unlock + tier levels (must match client ArchipelagoShopSlotAccess).
-Story quest keys must match Regions.py entrance gates and QuestAccess quest names.
+Story quest keys must match QuestAccess quest names (AREA_STORY_QUEST / shop tables).
 """
 from __future__ import annotations
 
@@ -58,29 +58,21 @@ SHOP_AP_ITEMS_PORTAL_GATE = "sanctum_catacombs_f2"
 # Tier budgets / goal trim only (not used for slot visibility).
 SHOP_SLOT_TIER_LEVELS = (4, 8, 12, 16, 20)
 
-# Regions.py entrance extras (destination region -> completed quest event required).
-REGION_ENTRANCE_STORY_QUEST: Dict[str, str] = {
-    "Effold Terrace": "Communing Catacombs",
-    "Sanctum Catacombs lvl 1": "Communing Catacombs",
-    "Crescent Road": "The Keep Within",
-    "Bularr Fortress": "Finding Ammagon",
-    "Crescent Grove lvl 1": "The Keep Within",
-}
+# First visit to a zone: portal route only (Regions.py uses region_rule / has_area).
+# Do not gate an entrance on a quest that completes inside that zone.
+REGION_ENTRANCE_STORY_QUEST: Dict[str, str] = {}
 
-# Gameplay access (grind spawns, fishing spots): same gates plus deeper zones on those routes.
+# Deeper gameplay on a route after a story beat (not first portal hop).
 AREA_STORY_QUEST: Dict[str, str] = {
-    **REGION_ENTRANCE_STORY_QUEST,
     "Sanctum Catacombs lvl 2": "Communing Catacombs",
     "Sanctum Catacombs lvl 3": "Communing Catacombs",
     "Crescent Grove lvl 2": "The Keep Within",
 }
 
-# Off-Sanctum shop merchants that sit behind story routes (portal gate alone is not enough).
+# Extra shop gates beyond portal route (catacombs vendors after Communing ritual).
 SHOP_MERCHANT_STORY_QUEST: Dict[str, str] = {
     "Tesh's Wares": "Communing Catacombs",
     "Nesh's Wares": "Communing Catacombs",
-    "Rikko's Treasures": "The Keep Within",
-    "Cotoo's Treasures": "The Keep Within",
 }
 
 SHOP_MERCHANT_AREA = {

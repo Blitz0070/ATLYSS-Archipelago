@@ -5,14 +5,20 @@ Omit checks beyond the selected victory condition so generation does not place
 items on locations the player would never need for that goal (e.g. Slime Diva
 drops late bosses, grove merchants, and high level milestones).
 
-Quest min-levels come from QuestAccess.QUEST_ACCESS; other checks parsed from Rules.py.
+Quest min-levels come from QuestAccess.QUEST_ACCESS; other checks use static metadata tables.
 """
 from __future__ import annotations
 
-import re
 from typing import Dict, Optional, Set
 
-from .Locations import bosses, enemy_data, location_grind_data
+from .AccessData import parse_shop_buy_location, shop_slot_tier_level
+from .Locations import (
+    achievements,
+    merchants,
+    bosses,
+    enemy_data,
+    location_grind_data,
+)
 
 # Goal option value -> level cap for trimming (see Options.Goal).
 GOAL_LEVEL_CAP: Dict[int, int] = {
@@ -44,31 +50,45 @@ _NO_TRIM_GOALS: Set[int] = {6, 7}
 _location_min_grind_levels: Optional[Dict[str, int]] = None
 
 
-def _load_rules_source() -> str:
-    """Load Rules.py text from the apworld package (works inside .apworld zips)."""
-    pkg = __package__ or "atlyss"
-    try:
-        from importlib import resources
-        return resources.files(pkg).joinpath("Rules.py").read_text(encoding="utf-8")
-    except Exception:
-        import inspect
-        from . import Rules
-        return inspect.getsource(Rules)
+_MILESTONE_LEVELS = (2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32)
 
 
-def _parse_min_grind_levels_from_rules(rules_text: str) -> Dict[str, int]:
-    levels: Dict[str, int] = {}
-    patterns = (
-        r'"([^"]+)":\s*lambda[^:]*can_grind_level\(state,\s*player,\s*(\d+)\)',
-        r'"([^"]+)":\s*lambda[^:]*can_grind_fish\(state,\s*player,\s*(\d+)\)',
-        r'"([^"]+)":\s*lambda[^:]*can_grind_mine\(state,\s*player,\s*(\d+)\)',
-    )
-    for pattern in patterns:
-        for match in re.finditer(pattern, rules_text):
-            name, level = match.group(1), int(match.group(2))
-            if name not in levels or level < levels[name]:
-                levels[name] = level
-    return levels
+def _region_min_entry_level(region_name: str) -> int:
+    for area_name, min_level, _max_level in location_grind_data:
+        if area_name == region_name:
+            return min_level
+    return 0
+
+
+def _region_max_level(region_name: str) -> int:
+    for area_name, _min_level, max_level in location_grind_data:
+        if area_name == region_name:
+            return max_level
+    return 0
+
+
+def _achievement_min_level(name: str, region_name: str) -> int:
+    # Preserve old “recommended level” metadata purely for goal trimming.
+    if "Catacombs" in name:
+        if "(1-6)" in name:
+            return 6
+        if "(6-12)" in name:
+            return 12
+        if "(12-18)" in name:
+            return 18
+    if "Grove" in name:
+        if "(15-20)" in name:
+            return 20
+        if "(20-25)" in name:
+            return 25
+    if name in {"Judgement", "Corrupted Arcana", "Holier than Thou"}:
+        return 28
+    if name == "Skill Student":
+        return 10
+    if name == "Trout Master":
+        return 10
+    # Default: use region band max (e.g., Sanctum=0 -> becomes 0, treated as always in scope)
+    return max(1, _region_max_level(region_name))
 
 
 def _get_location_min_grind_levels() -> Dict[str, int]:
@@ -77,19 +97,29 @@ def _get_location_min_grind_levels() -> Dict[str, int]:
         from .QuestAccess import QUEST_ACCESS
 
         levels = {name: level for name, (level, _after, _gate) in QUEST_ACCESS.items()}
-        parsed = _parse_min_grind_levels_from_rules(_load_rules_source())
-        for name, level in parsed.items():
-            if name not in levels or level < levels[name]:
-                levels[name] = level
+        # Level milestone locations.
+        for level in _MILESTONE_LEVELS:
+            levels.setdefault(f"Reach Level {level}", level)
+
+        # Profession grind locations.
+        for i in range(1, 11):
+            levels.setdefault(f"Fishing Lv. {i}", i)
+            levels.setdefault(f"Mining Lv. {i}", i)
+
+        # Shop buy locations: treat as their slot tier for trimming.
+        for location_name, _region in merchants:
+            parsed = parse_shop_buy_location(location_name)
+            if parsed is None:
+                continue
+            slot, merchant = parsed
+            levels.setdefault(location_name, shop_slot_tier_level(merchant, slot))
+
+        # Achievements: keep previous “recommended level” metadata for trimming.
+        for location_name, region in achievements:
+            levels.setdefault(location_name, _achievement_min_level(location_name, region))
+
         _location_min_grind_levels = levels
     return _location_min_grind_levels
-
-
-def _region_min_entry_level(region_name: str) -> int:
-    for area_name, min_level, _max_level in location_grind_data:
-        if area_name == region_name:
-            return min_level
-    return 0
 
 
 def should_trim_locations_for_goal(goal: int) -> bool:

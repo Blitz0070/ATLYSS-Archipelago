@@ -158,7 +158,8 @@ def get_portal_gate(gate_id: str) -> PortalGate:
     random_items, sanctum, tuul = PORTAL_GATES[gate_id]
     return _random_portals_for_gate(random_items), sanctum, tuul
 
-# quest_name -> (min_level, after_quest, portal_gate_id) — gate ids match PORTAL_GATES keys
+# quest_name -> (min_level, after_quest, portal_gate_id)
+# min_level: GoalScope / tier metadata only — not used in quest access rules
 QUEST_ACCESS: Dict[str, Tuple[int, Optional[str], Optional[str]]] = {
     # --- Tutorial / main story ---
     "A Warm Welcome": (1, None, None),
@@ -262,17 +263,15 @@ FISHING_ROD_REQUIRED_QUESTS = frozenset(
 )
 
 
-def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Optional[str]):
+def _make_quest_rule(player: int, after: Optional[str], gate_id: Optional[str]):
     if gate_id:
         random_items, sanctum_prog, tuul_prog = get_portal_gate(gate_id)
     else:
         random_items, sanctum_prog, tuul_prog = (), 0, 0
 
     def rule(state):
-        from .Rules import can_grind_level, has_portal_access, has_quest
+        from .Rules import has_portal_access, has_quest
 
-        if not can_grind_level(state, player, level):
-            return False
         if after is not None and not has_quest(state, player, after):
             return False
         if gate_id is not None:
@@ -286,8 +285,8 @@ def _make_quest_rule(player: int, level: int, after: Optional[str], gate_id: Opt
 def get_quest_rule_map(player: int) -> dict:
     """Access rules for every entry in Locations.quests."""
     rules = {
-        name: _make_quest_rule(player, level, after, gate)
-        for name, (level, after, gate) in QUEST_ACCESS.items()
+        name: _make_quest_rule(player, after, gate)
+        for name, (_min_level, after, gate) in QUEST_ACCESS.items()
     }
     for name in PICKAXE_REQUIRED_QUESTS:
         base = rules[name]

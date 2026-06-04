@@ -3,5 +3,4 @@ __pycache__/
 *$py.class
 .idea/
 .git/
-docs/
 scripts/

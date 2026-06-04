@@ -1,4 +1,5 @@
-from worlds.AutoWorld import World
+from BaseClasses import Item, Tutorial
+from worlds.AutoWorld import World, WebWorld
 from .Locations import *
 from .Rules import *
 from .Options import *
@@ -16,11 +17,25 @@ from typing import *
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
+
+class AtlyssWeb(WebWorld):
+    tutorials = [Tutorial(
+        "Multiworld Setup Guide",
+        "A guide to installing the Atlyss Archipelago mod and joining a multiworld.",
+        "English",
+        "setup_en.md",
+        "setup/en",
+        ["Azrael0534", "Nichologeam", "Sterlia", "SW_CreeperKing", "Blitz0"],
+    )]
+    game_info_languages = ["en"]
+
+
 class Atlyss(World):
     """
 	Atlyss
 	"""
     game = "Atlyss"
+    web = AtlyssWeb()
     options_dataclass = AtlyssOptions
     options: AtlyssOptions
     settings: ClassVar[AtlyssSettings]

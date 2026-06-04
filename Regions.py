@@ -1,17 +1,9 @@
 from BaseClasses import Location, Region, Item, ItemClassification
-from .AccessData import REGION_ENTRANCE_STORY_QUEST
 from .Locations import *
 from .Rules import *
 from .GoalScope import location_in_goal_scope
 from .ProfessionToolData import PROFESSION_TOOL_BUYS
 from .RegionGraph import region_rule
-
-
-def _story_quest_gate(player: int, region_name: str):
-    quest = REGION_ENTRANCE_STORY_QUEST.get(region_name)
-    if quest is None:
-        return None
-    return lambda state, q=quest, p=player: has_quest(state, p, q)
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
 
@@ -50,14 +42,11 @@ def gen_create_regions(world):
     region_map["Menu"].connect(region_map["Sanctum"], rule=lambda state: True)
     region_map["Sanctum"].connect(region_map["Outer Sanctum"], rule=region_rule(player, "Outer Sanctum"))
     region_map["Outer Sanctum"].connect(region_map["Arcwood Pass"], rule=region_rule(player, "Arcwood Pass"))
-    region_map["Outer Sanctum"].connect(
-        region_map["Effold Terrace"],
-        rule=region_rule(player, "Effold Terrace", _story_quest_gate(player, "Effold Terrace")),
-    )
+    region_map["Outer Sanctum"].connect(region_map["Effold Terrace"], rule=region_rule(player, "Effold Terrace"))
     region_map["Outer Sanctum"].connect(region_map["Tuul Valley"], rule=region_rule(player, "Tuul Valley"))
     region_map["Arcwood Pass"].connect(
         region_map["Sanctum Catacombs lvl 1"],
-        rule=region_rule(player, "Sanctum Catacombs lvl 1", _story_quest_gate(player, "Sanctum Catacombs lvl 1")),
+        rule=region_rule(player, "Sanctum Catacombs lvl 1"),
     )
     region_map["Sanctum Catacombs lvl 1"].connect(
         region_map["Sanctum Catacombs lvl 2"],
@@ -67,20 +56,14 @@ def gen_create_regions(world):
         region_map["Sanctum Catacombs lvl 3"],
         rule=region_rule(player, "Sanctum Catacombs lvl 3"),
     )
-    region_map["Arcwood Pass"].connect(
-        region_map["Crescent Road"],
-        rule=region_rule(player, "Crescent Road", _story_quest_gate(player, "Crescent Road")),
-    )
+    region_map["Arcwood Pass"].connect(region_map["Crescent Road"], rule=region_rule(player, "Crescent Road"))
     region_map["Tuul Valley"].connect(region_map["Tuul Enclave"], rule=region_rule(player, "Tuul Enclave"))
     region_map["Crescent Road"].connect(region_map["Luvora Garden"], rule=region_rule(player, "Luvora Garden"))
     region_map["Crescent Road"].connect(region_map["Crescent Keep"], rule=region_rule(player, "Crescent Keep"))
-    region_map["Tuul Enclave"].connect(
-        region_map["Bularr Fortress"],
-        rule=region_rule(player, "Bularr Fortress", _story_quest_gate(player, "Bularr Fortress")),
-    )
+    region_map["Tuul Enclave"].connect(region_map["Bularr Fortress"], rule=region_rule(player, "Bularr Fortress"))
     region_map["Crescent Keep"].connect(
         region_map["Crescent Grove lvl 1"],
-        rule=region_rule(player, "Crescent Grove lvl 1", _story_quest_gate(player, "Crescent Grove lvl 1")),
+        rule=region_rule(player, "Crescent Grove lvl 1"),
     )
     region_map["Crescent Grove lvl 1"].connect(
         region_map["Crescent Grove lvl 2"],

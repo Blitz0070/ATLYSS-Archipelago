@@ -15,7 +15,7 @@ from .QuestAccess import get_area_portal_gate, get_portal_gate, get_quest_rule_m
 #
 # random_portals: has_area() -> QuestAccess.AREA_TO_GATE -> has_portal_gate() (full hub chain).
 # progressive: has_area() -> PORTAL_GATES via AREA_TO_GATE (Sanctum + Tuul lines).
-# has_area_for_gameplay(): has_area + AccessData.AREA_STORY_QUEST (matches Regions.py).
+# has_area_for_gameplay(): has_area + AccessData.AREA_STORY_QUEST (deeper zones only; entrances are portal-only).
 #
 # Progressive unlock order:
 # Sanctum line (11): Outer, Arcwood, Catacombs 1–3, Effold, Road, Luvora, Keep, Grove 1–2
@@ -166,29 +166,21 @@ def get_rule_map(player):
         "Mining Lv. 10": lambda state: can_grind_mine(state, player, 10) and has_mining_high_route(state, player)
         and has_mining_tool_for_logic(state, player),
         # ----- Achievements -----
-        "A New Journey": lambda state: can_grind_level(state, player, 1),
-        "Clearing Catacombs (1-6)": lambda state: can_grind_level(state, player, 6)
-        and has_portal_gate(state, player, "sanctum_catacombs"),
-        "Clearing Catacombs (6-12)": lambda state: can_grind_level(state, player, 12)
-        and has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Clearing Catacombs (12-18)": lambda state: can_grind_level(state, player, 18)
-        and has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Clearing Grove (15-20)": lambda state: can_grind_level(state, player, 20)
-        and has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Clearing Grove (20-25)": lambda state: can_grind_level(state, player, 25)
-        and has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Judgement": lambda state: can_grind_level(state, player, 28) and has_item(state, player, "Experience Bond", 1),
-        "Corrupted Arcana": lambda state: can_grind_level(state, player, 28) and has_item(state, player,
-                                                                                          "Experience Bond", 1),
-        "Holier than Thou": lambda state: can_grind_level(state, player, 28) and has_item(state, player,
-                                                                                          "Experience Bond", 1),
-        "Altered Vision": lambda state: can_grind_level(state, player, 1) and has_item(state, player, "Illusion Stone",
-                                                                                       1),
-        "Scaling the Tower": lambda state: can_grind_level(state, player, 1),
-        "Rude!": lambda state: can_grind_level(state, player, 1),
-        "Fashion Sense": lambda state: can_grind_level(state, player, 1),
+        "A New Journey": lambda state: True,
+        "Clearing Catacombs (1-6)": lambda state: has_portal_gate(state, player, "sanctum_catacombs"),
+        "Clearing Catacombs (6-12)": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
+        "Clearing Catacombs (12-18)": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
+        "Clearing Grove (15-20)": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
+        "Clearing Grove (20-25)": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
+        "Judgement": lambda state: has_item(state, player, "Experience Bond", 1),
+        "Corrupted Arcana": lambda state: has_item(state, player, "Experience Bond", 1),
+        "Holier than Thou": lambda state: has_item(state, player, "Experience Bond", 1),
+        "Altered Vision": lambda state: has_item(state, player, "Illusion Stone", 1),
+        "Scaling the Tower": lambda state: True,
+        "Rude!": lambda state: True,
+        "Fashion Sense": lambda state: True,
         "Trout Master": lambda state: can_grind_fish(state, player, 10),
-        "Skill Student": lambda state: can_grind_level(state, player, 10),
+        "Skill Student": lambda state: True,
         # ----- Boss checks -----
         "Slime Diva": lambda state: can_beat_enemy(state, player, "Slime Diva"),
         "Lord Zuulneruda": lambda state: can_beat_enemy(state, player, "Lord Zuulneruda"),
@@ -303,8 +295,6 @@ def can_grind_mine(state, player, level) -> bool:
 
 def can_beat_enemy(state, player, enemy_name) -> bool:
     level, areas = enemy_data[enemy_name]
-    if not can_grind_level(state, player, level):
-        return False
     if not areas:
         return True
     if all(a.startswith("Sanctum Catacombs") for a in areas):
