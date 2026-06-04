@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from Options import *
+from Options import Choice, DefaultOnToggle, OptionGroup, PerGameCommonOptions, Toggle
 
 
 # File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
@@ -153,3 +153,24 @@ class AtlyssOptions(PerGameCommonOptions):
     class_filter: ClassFilter
     experience_multiplier: ExperienceMultiplier
     crown_multiplier: CrownMultiplier
+
+
+atlyss_option_groups = [
+    OptionGroup("Goal & Checks", [
+        Goal,
+        Achievements,
+    ]),
+    OptionGroup("World Access", [
+        RandomPortals,
+        ShopSanity,
+    ]),
+    OptionGroup("Item Pool", [
+        EquipmentProgression,
+        ClassFilter,
+        ProfessionTools,
+    ]),
+    OptionGroup("Gameplay Modifiers", [
+        ExperienceMultiplier,
+        CrownMultiplier,
+    ]),
+]

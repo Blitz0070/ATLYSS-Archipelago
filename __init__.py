@@ -3,6 +3,7 @@ from worlds.AutoWorld import World, WebWorld
 from .Locations import *
 from .Rules import *
 from .Options import *
+from .presets import atlyss_options_presets
 from .Items import *
 from .Regions import *
 from .Settings import *
@@ -28,6 +29,9 @@ class AtlyssWeb(WebWorld):
         ["Azrael0534", "Nichologeam", "Sterlia", "SW_CreeperKing", "Blitz0"],
     )]
     game_info_languages = ["en"]
+    option_groups = atlyss_option_groups
+    options_presets = atlyss_options_presets
+    bug_report_page = "https://github.com/Blitz0070/ATLYSS-Archipelago/issues"
 
 
 class Atlyss(World):
