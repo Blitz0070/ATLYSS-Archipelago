@@ -6,12 +6,13 @@ from .AccessData import (
     SHOP_AP_ITEMS_PORTAL_GATE,
 )
 from .Locations import *
-from .QuestAccess import get_area_portal_gate, get_portal_gate, get_quest_rule_map
+from .QuestAccess import get_area_portal_gate, get_portal_gate
 
-# File is Auto-generated, see: [https://github.com/SWCreeperKing/ApWorldFactories/tree/master/ApWorldFactories/Games]
+# Parity helpers for portal/grind/boss checks. Access rules live in AtlyssRules/ (Rule Builder);
+# custom Rule._evaluate and test_portal_compose.py call into this module.
 
 # =============================================================================
-# Portal access (YAML: random_portals) — used by region routes and QuestAccess.py
+# Portal access (YAML: random_portals) — mirrors portal_compose / QuestAccess gates
 #
 # random_portals: has_area() -> QuestAccess.AREA_TO_GATE -> has_portal_gate() (full hub chain).
 # progressive: has_area() -> PORTAL_GATES via AREA_TO_GATE (Sanctum + Tuul lines).
@@ -86,111 +87,6 @@ def has_shop_slot_portal_unlock(state, player, merchant: str, slot: int) -> bool
 
 def has_shop_slot_progress(state, player, merchant: str, slot: int) -> bool:
     return has_shop_access(state, player, merchant) and has_shop_slot_portal_unlock(state, player, merchant, slot)
-
-
-def apply_shop_slot_rules(rules: dict, player) -> None:
-    for location_name, _region_name in merchants:
-        prefix = "Buy Item #"
-        marker = " from "
-        if not location_name.startswith(prefix) or marker not in location_name:
-            continue
-        slot_text, merchant = location_name[len(prefix):].split(marker, 1)
-        slot = int(slot_text)
-        rules[location_name] = (
-            lambda state, merchant=merchant, slot=slot: has_shop_slot_progress(state, player, merchant, slot)
-        )
-
-
-def get_rule_map(player):
-    rules = get_quest_rule_map(player)
-    rules.update({
-        # ----- Level milestones -----
-        "Reach Level 2": lambda state: can_grind_level(state, player, 2),
-        "Reach Level 4": lambda state: can_grind_level(state, player, 4),
-        "Reach Level 6": lambda state: can_grind_level(state, player, 6),
-        "Reach Level 8": lambda state: can_grind_level(state, player, 8),
-        "Reach Level 10": lambda state: can_grind_level(state, player, 10),
-        "Reach Level 12": lambda state: can_grind_level(state, player, 12),
-        "Reach Level 14": lambda state: can_grind_level(state, player, 14),
-        "Reach Level 16": lambda state: can_grind_level(state, player, 16),
-        "Reach Level 18": lambda state: can_grind_level(state, player, 18),
-        "Reach Level 20": lambda state: can_grind_level(state, player, 20),
-        "Reach Level 22": lambda state: can_grind_level(state, player, 22),
-        "Reach Level 24": lambda state: can_grind_level(state, player, 24),
-        "Reach Level 26": lambda state: can_grind_level(state, player, 26),
-        "Reach Level 28": lambda state: can_grind_level(state, player, 28),
-        "Reach Level 30": lambda state: can_grind_level(state, player, 30),
-        "Reach Level 32": lambda state: can_grind_level(state, player, 32),
-        # Shop buy rules: apply_shop_slot_rules() below (merchant access + Catacombs lvl 2 portal gate).
-        "Buy Fishing Rod": lambda state: has_area(state, player, "Sanctum"),
-        "Buy Pickaxe": lambda state: has_area(state, player, "Sanctum"),
-        # ----- Professions -----
-        "Fishing Lv. 1": lambda state: can_grind_fish(state, player, 1)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 2": lambda state: can_grind_fish(state, player, 2)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 3": lambda state: can_grind_fish(state, player, 3)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 4": lambda state: can_grind_fish(state, player, 4) and has_fishing_mid_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 5": lambda state: can_grind_fish(state, player, 5) and has_fishing_mid_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 6": lambda state: can_grind_fish(state, player, 6) and has_fishing_mid_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 7": lambda state: can_grind_fish(state, player, 7) and has_fishing_high_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 8": lambda state: can_grind_fish(state, player, 8) and has_fishing_high_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 9": lambda state: can_grind_fish(state, player, 9) and has_fishing_high_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Fishing Lv. 10": lambda state: can_grind_fish(state, player, 10) and has_fishing_high_route(state, player)
-        and has_fishing_tool_for_logic(state, player),
-        "Mining Lv. 1": lambda state: can_grind_mine(state, player, 1)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 2": lambda state: can_grind_mine(state, player, 2) and has_mining_early_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 3": lambda state: can_grind_mine(state, player, 3) and has_mining_early_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 4": lambda state: can_grind_mine(state, player, 4) and has_mining_mid_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 5": lambda state: can_grind_mine(state, player, 5) and has_mining_mid_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 6": lambda state: can_grind_mine(state, player, 6) and has_mining_mid_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 7": lambda state: can_grind_mine(state, player, 7) and has_mining_high_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 8": lambda state: can_grind_mine(state, player, 8) and has_mining_high_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 9": lambda state: can_grind_mine(state, player, 9) and has_mining_high_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        "Mining Lv. 10": lambda state: can_grind_mine(state, player, 10) and has_mining_high_route(state, player)
-        and has_mining_tool_for_logic(state, player),
-        # ----- Achievements -----
-        "A New Journey": lambda state: True,
-        "Clearing Catacombs (1-6)": lambda state: has_portal_gate(state, player, "sanctum_catacombs"),
-        "Clearing Catacombs (6-12)": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f2"),
-        "Clearing Catacombs (12-18)": lambda state: has_portal_gate(state, player, "sanctum_catacombs_f3"),
-        "Clearing Grove (15-20)": lambda state: has_portal_gate(state, player, "crescent_grove_colossus"),
-        "Clearing Grove (20-25)": lambda state: has_portal_gate(state, player, "crescent_grove_lvl2"),
-        "Judgement": lambda state: has_item(state, player, "Experience Bond", 1),
-        "Corrupted Arcana": lambda state: has_item(state, player, "Experience Bond", 1),
-        "Holier than Thou": lambda state: has_item(state, player, "Experience Bond", 1),
-        "Altered Vision": lambda state: has_item(state, player, "Illusion Stone", 1),
-        "Scaling the Tower": lambda state: True,
-        "Rude!": lambda state: True,
-        "Fashion Sense": lambda state: True,
-        "Trout Master": lambda state: can_grind_fish(state, player, 10),
-        "Skill Student": lambda state: True,
-        # ----- Boss checks -----
-        "Slime Diva": lambda state: can_beat_enemy(state, player, "Slime Diva"),
-        "Lord Zuulneruda": lambda state: can_beat_enemy(state, player, "Lord Zuulneruda"),
-        "Lord Kaluuz": lambda state: can_beat_enemy(state, player, "Lord Kaluuz"),
-        "Colossus": lambda state: can_beat_enemy(state, player, "Colossus"),
-        "Valdur": lambda state: can_beat_enemy(state, player, "Valdur"),
-        "Galius": lambda state: can_beat_enemy(state, player, "Galius"),
-    })
-    apply_shop_slot_rules(rules, player)
-    return rules
 
 
 # =============================================================================

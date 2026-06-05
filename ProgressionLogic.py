@@ -288,6 +288,32 @@ def _item_can_fit_unfilled_location(world, item: Item, loc) -> bool:
     return tier <= _location_max_tier(loc)
 
 
+def _gated_rebalance_useful_item(world, unfilled) -> Item:
+    """Non-tier useful for gated rebalance (concrete tiered pool items are stripped at end)."""
+    from .ItemClassAffinity import item_passes_class_filter
+    from .Items import useful_items
+
+    class_filter = world.options.class_filter.value
+    non_junk = _non_junk_unfilled_locations(unfilled)
+    candidates = [
+        name for name in useful_items
+        if item_passes_class_filter(class_filter, name)
+        and get_item_tier(name) is None
+        and _useful_item_name_fits_unfilled(name, non_junk)
+    ]
+    if candidates:
+        return world.create_item(world.random.choice(candidates))
+    untiered = [
+        name for name in useful_items
+        if item_passes_class_filter(class_filter, name)
+        and get_item_tier(name) is None
+    ]
+    if untiered:
+        return world.create_item(world.random.choice(untiered))
+    any_untiered = [name for name in useful_items if get_item_tier(name) is None]
+    return world.create_item(world.random.choice(any_untiered))
+
+
 def _fit_useful_item_for_unfilled(world, unfilled) -> Item:
     """Useful item that can fill at least one remaining non-junk check (gated tier rules)."""
     from .ItemClassAffinity import item_passes_class_filter
@@ -341,6 +367,21 @@ def _item_fits_any_unfilled(world, item: Item, unfilled) -> bool:
     return any(_item_can_fit_unfilled_location(world, item, loc) for loc in unfilled)
 
 
+def _strip_tiered_items_from_pool(world) -> None:
+    """Concrete tiered gear must be pre-placed, not left for fill (order-safe).
+
+    Early checks like Fashion Sense stay at max tier 1 (vanity); tier 2+ gear must not
+    remain in the pool for fill to place last on those locations.
+    """
+    player = world.player
+    pool = world.multiworld.itempool
+    for idx, item in enumerate(pool):
+        if item.player != player:
+            continue
+        if get_item_tier(item.name) is not None:
+            pool[idx] = _random_filler_item(world)
+
+
 def rebalance_gated_pool_for_junk_slots(world) -> None:
     """After pre_fill, match pool filler/non-filler counts to unfilled slot types."""
     if count_junk_locations(world) == 0:
@@ -352,9 +393,7 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
 
     if gated:
         for idx, item in enumerate(pool):
-            if item.player == player and (
-                get_item_tier(item.name) is not None or get_progressive_item_tiers(item.name) is not None
-            ):
+            if item.player == player and get_item_tier(item.name) is not None:
                 pool[idx] = _random_filler_item(world)
 
     unfilled = list(world.multiworld.get_unfilled_locations(player))
@@ -390,11 +429,15 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
         ]
 
     for _ in range(len(pool) * 3):
+        unfilled = list(world.multiworld.get_unfilled_locations(player))
         f, n, j, k = count_filler(), count_non_filler(), junk_unfilled, non_junk_unfilled
         if f == j and n == k:
             break
         if f > j and filler_indices():
-            pool[filler_indices()[0]] = _safe_pool_useful_item(world)
+            if gated:
+                pool[filler_indices()[0]] = _gated_rebalance_useful_item(world, unfilled)
+            else:
+                pool[filler_indices()[0]] = _safe_pool_useful_item(world)
             continue
         rep = replaceable_non_filler()
         if f < j and rep:
@@ -415,11 +458,15 @@ def rebalance_gated_pool_for_junk_slots(world) -> None:
             if count_filler() < junk_unfilled:
                 pool[idx] = _random_filler_item(world)
             elif gated:
-                pool[idx] = _fit_useful_item_for_unfilled(world, unfilled)
+                pool[idx] = _gated_rebalance_useful_item(world, unfilled)
             else:
                 pool[idx] = _safe_pool_useful_item(world)
         if not changed:
             break
+
+    if gated:
+        _strip_tiered_items_from_pool(world)
+
 
 def apply_progression_rules(world) -> None:
     set_profession_junk_rules(world)

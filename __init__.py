@@ -1,5 +1,9 @@
-from BaseClasses import Item, Tutorial
-from worlds.AutoWorld import World, WebWorld
+from typing import cast
+
+from BaseClasses import CollectionState, Item, ItemClassification, Tutorial
+from rule_builder.cached_world import CachedRuleBuilderWorld
+from .AtlyssRules.collection_state import AtlyssCollectionState  # noqa: F401 — registers copy_mixin
+from worlds.AutoWorld import WebWorld
 from .Locations import *
 from .Rules import *
 from .Options import *
@@ -34,9 +38,30 @@ class AtlyssWeb(WebWorld):
     bug_report_page = "https://github.com/Blitz0070/ATLYSS-Archipelago/issues"
 
 
-class Atlyss(World):
+class Atlyss(CachedRuleBuilderWorld):
     """Atlyss"""
     game = "Atlyss"
+    rule_caching_enabled: ClassVar[bool] = True
+    item_mapping: ClassVar[dict[str, str]] = {
+        **{name: "Progressive Sanctum Portal" for name in (
+            "Outer Sanctum Portal",
+            "Arcwood Pass Portal",
+            "Sanctum Catacombs lvl 1 Portal",
+            "Sanctum Catacombs lvl 2 Portal",
+            "Sanctum Catacombs lvl 3 Portal",
+            "Effold Terrace Portal",
+            "Crescent Road Portal",
+            "Luvora Garden Portal",
+            "Crescent Keep Portal",
+            "Crescent Grove lvl 1 Portal",
+            "Crescent Grove lvl 2 Portal",
+        )},
+        **{name: "Progressive Tuul Portal" for name in (
+            "Tuul Valley Portal",
+            "Tuul Enclave Portal",
+            "Bularr Fortress Portal",
+        )},
+    }
     web = AtlyssWeb()
     options_dataclass = AtlyssOptions
     options: AtlyssOptions
@@ -52,6 +77,48 @@ class Atlyss(World):
     def __init__(self, multiworld: "MultiWorld", player: int):
         super().__init__(multiworld, player)
         self.location_count = 0
+
+    def _invalidate_rule_cache_on_collect(self, state: CollectionState, item: Item) -> None:
+        """Drop cached rule results affected by new items (broader than AP False-only)."""
+        player_results = cast(
+            dict[int, bool],
+            state.rule_builder_cache[self.player],  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        if self.rule_item_dependencies:
+            mapped_name = self.item_mapping.get(item.name, "")
+            rule_ids = (
+                self.rule_item_dependencies[item.name]
+                | self.rule_item_dependencies[mapped_name]
+            )
+            for rule_id in rule_ids:
+                player_results.pop(rule_id, None)
+        for dep_map in (
+            self.rule_region_dependencies,
+            self.rule_location_dependencies,
+            self.rule_entrance_dependencies,
+        ):
+            if dep_map:
+                for rule_ids in dep_map.values():
+                    for rule_id in rule_ids:
+                        player_results.pop(rule_id, None)
+
+    def collect(self, state: CollectionState, item: Item) -> bool:
+        changed = super().collect(state, item)
+        if not changed or not self.rule_caching_enabled:
+            return changed
+        player_results = cast(
+            dict[int, bool],
+            state.rule_builder_cache[self.player],  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        # Fill / all_state collect many progression items; partial invalidation is unsafe today.
+        if item.classification in (
+            ItemClassification.progression,
+            ItemClassification.useful,
+        ):
+            player_results.clear()
+        else:
+            self._invalidate_rule_cache_on_collect(state, item)
+        return changed
 
     def generate_early(self):
         options = self.options
@@ -118,6 +185,10 @@ class Atlyss(World):
         return slot_data
 
     def generate_output(self, output_directory: str):
+        from .AtlyssRules.export_logic import should_export_logic, write_logic_export
+
+        if should_export_logic(self):
+            write_logic_export(self, output_directory)
         if self.gen_puml:
             from Utils import visualize_regions
             state = self.multiworld.get_all_state(False)

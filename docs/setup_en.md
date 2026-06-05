@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* **Archipelago 0.6.5 or later** — [releases](https://github.com/ArchipelagoMW/Archipelago/releases)
+* **Archipelago 0.6.7 or later** — [releases](https://github.com/ArchipelagoMW/Archipelago/releases) (Rule Builder / `set_rule`; this world targets AP 0.6.7+)
 * **ATLYSS** (Steam) with **BepInEx 5.4+**
 * **Atlyss Archipelago** mod (BepInEx plugin) and this world's **`atlyss.apworld`**
 
@@ -74,8 +74,10 @@ folder for local play.
 ### Connect
 
 Press **F5** (default) to connect after your character is in the world. Chat will confirm the link
-and show your goal. If the socket drops, press **F5** again to reconnect; quest and level progress
-from your save are polled again for missed checks.
+and show your goal. If the socket drops unexpectedly, the mod **auto-reconnects** with backoff
+(enabled by default in BepInEx config `Connection.AutoReconnect`). Press **F5** anytime to connect
+manually or reset the retry timer. Save/quit and returning to the main menu still fully disconnect.
+Quest and level progress from your save are polled again after reconnect for missed checks.
 
 ### Gameplay tips
 
@@ -98,5 +100,17 @@ commands alongside the game. See the
   game **Atlyss**.
 * **No items or checks** — confirm BepInEx loaded the plugin (check `BepInEx/LogOutput.log` for
   `[AtlyssAP]` lines).
-* **Wrong Archipelago version** — this world requires **0.6.5+**; update Archipelago and the
+* **Wrong Archipelago version** — this world requires **0.6.7+**; update Archipelago and the
   `.apworld` from the latest release.
+
+## Developer notes (logic export)
+
+The apworld can write a post-generation JSON snapshot of resolved access rules:
+
+* **`atlyss_logic_pN.json`** in the spoiler/output folder (`N` = player slot).
+* Enabled when **Universal Tracker** triggers a regen (`re_gen_passthrough` for Atlyss), or manually via player settings **`export_logic: true`** in your YAML (default **off** for normal play).
+* Used for debugging and Universal Tracker tooling; the in-game mod does **not** read this file.
+
+Schema (`schema_version`, `meta`, `locations[]`, `entrances[]`, `completion`) is documented in
+`AtlyssRules/export_logic.py` and [`docs/rule_builder_phase3.md`](rule_builder_phase3.md).
+`meta.item_mapping` lists progressive portal name aliases for display only.

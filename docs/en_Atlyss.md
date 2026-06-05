@@ -82,3 +82,9 @@ the same instance benefits from items sent to that slot's player.
 
 If you enable **Death Link** in the mod's Archipelago settings tab (or your YAML tags), linked
 deaths from other worlds can affect your run when the feature is active on the server.
+
+## Connection drops
+
+The in-game mod retries login after an unexpected disconnect (BepInEx `Connection.AutoReconnect`,
+default on). Press **F5** to connect manually or reset backoff. Intentional disconnects (main
+menu, save and quit) do not auto-reconnect.

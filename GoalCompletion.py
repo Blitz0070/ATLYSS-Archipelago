@@ -9,11 +9,10 @@ Fork Improved-Logic uses 7 goals (no Lord Kaluuz / Valdur singles); see FORK_GOA
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, Tuple
 
 from .GoalScope import GOAL_TARGET_BOSS
 from .Locations import quests
-from .Rules import can_beat_enemy, can_grind_level, has_quest
 
 # yaml option key -> slot_data / Options value
 GOAL_KEYS: Tuple[str, ...] = (
@@ -55,31 +54,9 @@ FORK_GOAL_INDEX: Dict[int, int] = {
 }
 
 
-def _all_quests_complete(state, player: int) -> bool:
-    return all(has_quest(state, player, name) for name in ALL_QUESTS_REQUIRED)
-
-
-def _all_bosses_complete(state, player: int) -> bool:
-    return all(can_beat_enemy(state, player, name) for name in ALL_BOSSES_REQUIRED)
-
-
 def apply_completion_condition(world) -> None:
-    """Set multiworld.completion_condition for this player from options.goal."""
-    player = world.player
+    """Set completion rule for this player from options.goal."""
+    from .AtlyssRules.catalog import build_completion_rule
+
     goal = int(world.options.goal)
-
-    conditions: Dict[int, Callable] = {
-        0: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[0]),
-        1: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[1]),
-        2: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[2]),
-        3: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[3]),
-        4: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[4]),
-        5: lambda state, p=player: can_beat_enemy(state, p, GOAL_TARGET_BOSS[5]),
-        6: lambda state, p=player: _all_bosses_complete(state, p),
-        7: lambda state, p=player: _all_quests_complete(state, p),
-        8: lambda state, p=player: can_grind_level(state, p, 32),
-    }
-
-    if goal not in conditions:
-        raise ValueError(f"Unknown goal option {goal} for player {player}")
-    world.multiworld.completion_condition[player] = conditions[goal]
+    world.set_completion_rule(build_completion_rule(goal))
