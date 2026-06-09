@@ -370,8 +370,8 @@ def _item_fits_any_unfilled(world, item: Item, unfilled) -> bool:
 def _strip_tiered_items_from_pool(world) -> None:
     """Concrete tiered gear must be pre-placed, not left for fill (order-safe).
 
-    Early checks like Fashion Sense stay at max tier 1 (vanity); tier 2+ gear must not
-    remain in the pool for fill to place last on those locations.
+    Early Sanctum achievement checks stay at max tier 1; tier 2+ gear must not remain
+    in the pool for fill to place last on those locations.
     """
     player = world.player
     pool = world.multiworld.itempool

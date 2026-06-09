@@ -81,10 +81,6 @@ def _achievement_min_level(name: str, region_name: str) -> int:
             return 20
         if "(20-25)" in name:
             return 25
-    if name == "Skill Student":
-        return 10
-    if name == "Trout Master":
-        return 10
     # Default: use region band max (e.g., Sanctum=0 -> becomes 0, treated as always in scope)
     return max(1, _region_max_level(region_name))
 

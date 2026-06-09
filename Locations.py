@@ -171,9 +171,6 @@ achievements = [
     ["Altered Vision", "Sanctum"],
     ["Scaling the Tower", "Sanctum"],
     ["Rude!", "Sanctum"],
-    ["Fashion Sense", "Sanctum"],
-    ["Trout Master", "Sanctum"],
-    ["Skill Student", "Sanctum"]
 ]
 
 bosses = [

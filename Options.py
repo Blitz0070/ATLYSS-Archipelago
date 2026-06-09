@@ -54,9 +54,9 @@ class Achievements(DefaultOnToggle):
     """
     Whether in-game achievements are tracked as Archipelago locations.
     When enabled (default), unlocking achievements such as 'A New Journey',
-    'Trout Master', 'Skill Student', dungeon clears, 'Altered Vision',
-    'Rude!', etc. sends checks to other players (up to 12 locations with
-    goal trim; more without early goals).
+    dungeon clears, 'Altered Vision', 'Scaling the Tower', 'Rude!', etc.
+    sends checks to other players (up to 9 locations with goal trim; more
+    without early goals).
     When disabled, no achievement locations are placed in this slot and the
     mod will not send their checks during play; pick this for a shorter or
     more boss/quest-focused run.

@@ -157,17 +157,9 @@ class TestAccessData(unittest.TestCase):
     def test_location_max_tier_named_sanctum_quests(self) -> None:
         self.assertGreaterEqual(get_location_max_tier("Makin' a Wizwand", "Sanctum"), 2)
         self.assertGreaterEqual(get_location_max_tier("Wicked Wizboars", "Sanctum"), 2)
-        self.assertGreaterEqual(get_location_max_tier("Skill Student", "Sanctum"), 2)
+        self.assertEqual(get_location_max_tier("Scaling the Tower", "Sanctum"), 1)
         self.assertEqual(get_location_max_tier("Killing Tomb", "Arcwood Pass"), 1)
         self.assertEqual(get_location_max_tier("Buy Item #1 from Sally's Nook", "Sanctum"), 1)
-
-    def test_skill_student_rule_requires_level_10(self) -> None:
-        from worlds.atlyss.AtlyssRules.catalog import build_location_rule
-        from worlds.atlyss.AtlyssRules.custom_rules import CanGrindLevel
-
-        rule = build_location_rule("Skill Student")
-        self.assertIsInstance(rule, CanGrindLevel)
-        self.assertEqual(rule.level, 10)
 
     def test_useful_item_name_fits_unfilled_respects_per_location_tier(self) -> None:
         from worlds.atlyss.ProgressionLogic import (
