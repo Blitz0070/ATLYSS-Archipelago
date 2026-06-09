@@ -16,3 +16,10 @@ class TestDatapackage(unittest.TestCase):
         self.assertIn("Slime Diva", location_name_groups["Bosses"])
         self.assertIn("Reach Level 32", location_name_groups["Levels"])
         self.assertIn("A Warm Welcome", location_name_groups["Quests"])
+
+    def test_quest_names_match_location_dict_prefix(self) -> None:
+        from worlds.atlyss.Locations import quests
+
+        quest_names = [entry[0] for entry in quests]
+        self.assertEqual(quest_names, location_dict[: len(quest_names)])
+        self.assertIn("Mastery of Mind", quest_names)

@@ -1,11 +1,7 @@
 from BaseClasses import ItemClassification
 from .Locations import *
 from .Options import *
-from .ProgressionLogic import (
-    compute_tier_budgets,
-    count_junk_locations,
-    tier_selection_would_overflow,
-)
+from .ProgressionLogic import count_junk_locations
 from .ItemTiers import get_item_tier
 from .ItemClassAffinity import item_passes_class_filter
 from .ProfessionToolData import PROFESSION_TOOL_BUYS
@@ -672,23 +668,8 @@ def gen_create_items(world):
         for _ in range(PROGRESSIVE_TUUL_PORTAL_COUNT):
             _append_item(PROGRESSIVE_TUUL_PORTAL_ITEM, required=True)
 
-    if gated and world.location_count > 0:
-        tier_budgets = compute_tier_budgets(world)
-        tier_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
-        candidates = list(useful_items)
-        random.shuffle(candidates)
-        for item_name in candidates:
-            if world.location_count <= 0 or non_filler_count >= max_non_filler:
-                break
-            if not item_passes_class_filter(class_filter, item_name):
-                continue
-            tier = get_item_tier(item_name)
-            if tier is not None and tier_selection_would_overflow(tier, tier_counts, tier_budgets):
-                continue
-            if tier is not None:
-                tier_counts[tier] += 1
-            _append_item(item_name)
-    elif world.location_count > 0:
+    # Gated mode: progressive equipment lines only (no standalone concrete gear names).
+    if not gated and world.location_count > 0:
         candidates = [
             item_name for item_name in useful_items
             if get_item_tier(item_name) is not None

@@ -85,8 +85,10 @@ class ClassFilter(Choice):
 class EquipmentProgression(Choice):
     """
     How equipment is distributed.
-    Gated: progressive equipment is in the pool and gear placement follows
-    level/tier logic.
+    Gated: only progressive equipment lines (Any + class tracks per Class Filter)
+    are in the pool; the mod resolves each receipt to concrete gear by tier/level.
+    Standalone gear AP names are not added. Remaining checks are filler and other
+    useful items (stones, tomes, etc.).
     Unrestricted: progressive equipment is removed; individual gear pieces are
     randomized directly and can appear on any check.
     """

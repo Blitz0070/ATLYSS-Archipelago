@@ -1,8 +1,8 @@
 """Fill-side progression rules (``ProgressionLogic`` lambdas, not Rule Builder access).
 
 Uses ``auto_construct = False`` so each test builds its own world. Fill regressions
-live in ``TestGatedFillSmoke`` (including seed ``90343505581788154822``: Fashion Sense
-tier-1 vs Iron Bow tier-2 after rebalance re-injected gear).
+live in ``TestGatedFillSmoke`` (including seed ``90343505581788154822``: tier-1 checks
+must not receive tier-2+ concrete gear from fill).
 """
 from __future__ import annotations
 
@@ -73,7 +73,6 @@ class TestGatedFillSmoke(AtlyssTestBase):
             47215607589033149358,
             10851523903115954330,
             999707401169759378,
-            # Fashion Sense (tier-1): rebalance must not re-pool tier-2+ useful after prefill.
             90343505581788154822,
         ):
             with self.subTest(seed=seed):
@@ -93,4 +92,29 @@ class TestGatedFillSmoke(AtlyssTestBase):
             self.assertIsNone(
                 get_item_tier(item.name),
                 f"concrete tiered gear must be pre-placed or stripped, not pooled: {item.name}",
+            )
+
+    def test_gated_fill_places_no_concrete_tiered_gear(self) -> None:
+        from worlds.atlyss.Items import useful_items
+
+        self.options = {
+            "goal": "slime_diva",
+            "shop_sanity": "true",
+            "equipment_progression": "gated",
+            "random_portals": "false",
+            "class_filter": "all_classes",
+        }
+        concrete_tiered = {
+            name for name in useful_items if get_item_tier(name) is not None
+        }
+        self.world_setup(90343505581788154822)
+        distribute_items_restrictive(self.multiworld)
+        for location in self.multiworld.get_filled_locations(self.player):
+            item = location.item
+            if item is None:
+                continue
+            self.assertNotIn(
+                item.name,
+                concrete_tiered,
+                f"gated fill must not place standalone gear AP names: {location.name}",
             )
