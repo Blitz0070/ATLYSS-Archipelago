@@ -94,7 +94,7 @@ def _get_location_min_grind_levels() -> Dict[str, int]:
     if _location_min_grind_levels is None:
         from .QuestAccess import QUEST_ACCESS
 
-        levels = {name: level for name, (level, _after, _gate) in QUEST_ACCESS.items()}
+        levels = {name: spec.min_level for name, spec in QUEST_ACCESS.items()}
         # Level milestone locations.
         for level in _MILESTONE_LEVELS:
             levels.setdefault(f"Reach Level {level}", level)

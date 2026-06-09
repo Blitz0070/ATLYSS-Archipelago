@@ -151,7 +151,10 @@ def has_fishing_high_route(state, player) -> bool:
 
 
 def has_mining_early_route(state, player) -> bool:
-    return has_portal_gate(state, player, "arcwood_pass")
+    return (
+        has_portal_gate(state, player, "arcwood_pass")
+        or has_portal_gate(state, player, "effold_terrace")
+    )
 
 
 def has_mining_mid_route(state, player) -> bool:

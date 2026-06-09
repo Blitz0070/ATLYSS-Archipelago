@@ -86,14 +86,63 @@ class TestAccessData(unittest.TestCase):
         self.assertFalse(quest_requires_fishing_rod("A Warm Welcome"))
 
     def test_catacombs_f2_quest_gates(self) -> None:
-        source = (_WORLD_ROOT / "QuestAccess.py").read_text(encoding="utf-8")
+        from worlds.atlyss.QuestAccess import (
+            QUEST_ACCESS,
+            normalize_after_quest_names,
+            normalize_portal_gate_ids,
+        )
+
         for quest in ("The Voice of Zuulneruda", "Purging the Undead", "Rattlecage Rage"):
-            self.assertIn(
-                f'"{quest}": (6, "Killing Tomb", "sanctum_catacombs_f2"),',
-                source,
-                quest,
-            )
-        self.assertIn('"Killing Tomb": (1, None, "sanctum_catacombs"),', source)
+            spec = QUEST_ACCESS[quest]
+            self.assertEqual(spec.min_level, 6)
+            self.assertEqual(spec.after_quest, "Killing Tomb")
+            self.assertEqual(normalize_after_quest_names(spec.after_quest), ("Killing Tomb",))
+            self.assertEqual(normalize_portal_gate_ids(spec.portal_gates), ("sanctum_catacombs_f2",))
+        killing_tomb = QUEST_ACCESS["Killing Tomb"]
+        self.assertEqual(normalize_portal_gate_ids(killing_tomb.portal_gates), ("sanctum_catacombs",))
+
+    def test_night_spirits_uses_kill_enemy_requirements(self) -> None:
+        from worlds.atlyss.QuestAccess import QUEST_ACCESS
+
+        spec = QUEST_ACCESS["Night Spirits"]
+        self.assertEqual(spec.kill_enemies, ("Lesser Wisp", "Greater Wisp"))
+        self.assertIsNone(spec.portal_gates)
+
+    def test_dense_ingots_allows_arcwood_or_effold(self) -> None:
+        from worlds.atlyss.QuestAccess import QUEST_ACCESS, normalize_portal_gate_ids
+
+        self.assertEqual(
+            normalize_portal_gate_ids(QUEST_ACCESS["Dense Ingots"].portal_gates),
+            ("arcwood_pass", "effold_terrace"),
+        )
+
+    def test_level_only_quest_access_helper(self) -> None:
+        from worlds.atlyss.QuestAccess import QUEST_ACCESS, quest_uses_level_access
+
+        self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Call of Fury"]))
+        self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Focusin' in"]))
+        self.assertFalse(quest_uses_level_access(QUEST_ACCESS["Night Spirits"]))
+        self.assertFalse(quest_uses_level_access(QUEST_ACCESS["Mastery of Strength"]))
+        self.assertFalse(quest_uses_level_access(QUEST_ACCESS["A Warm Welcome"]))
+
+    def test_kill_enemy_or_groups(self) -> None:
+        from worlds.atlyss.QuestAccess import QUEST_ACCESS, iter_kill_enemy_names
+
+        spec = QUEST_ACCESS["Makin' a Vile Blade"]
+        self.assertEqual(spec.kill_enemies, (("Mouth", "Maw"), "Slimek", "Deathgel"))
+        self.assertEqual(
+            iter_kill_enemy_names(spec.kill_enemies),
+            ("Mouth", "Maw", "Slimek", "Deathgel"),
+        )
+
+    def test_after_quest_and_prerequisites(self) -> None:
+        from worlds.atlyss.QuestAccess import QUEST_ACCESS, normalize_after_quest_names
+
+        self.assertEqual(
+            normalize_after_quest_names(QUEST_ACCESS["Makin' a Ragespear"].after_quest),
+            ("Makin' a Mekspear", "Finding Ammagon"),
+        )
+        self.assertEqual(normalize_after_quest_names("Killing Tomb"), ("Killing Tomb",))
 
     def test_location_max_tier_named_sanctum_quests(self) -> None:
         self.assertGreaterEqual(get_location_max_tier("Makin' a Wizwand", "Sanctum"), 2)

@@ -71,6 +71,144 @@ class HasPortalGate(Rule["Atlyss"], game="Atlyss"):
 
 
 @dataclasses.dataclass()
+class HasAnyPortalGate(Rule["Atlyss"], game="Atlyss"):
+    gate_ids: tuple[str, ...]
+
+    @override
+    def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
+        if not self.gate_ids:
+            child = True_().resolve(world)
+            label = "any route"
+        elif len(self.gate_ids) == 1:
+            return HasPortalGate(self.gate_ids[0])._instantiate(world)
+        else:
+            combined = HasPortalGate(self.gate_ids[0])
+            for gate_id in self.gate_ids[1:]:
+                combined = combined | HasPortalGate(gate_id)
+            child = combined.resolve(world)
+            label = " OR ".join(
+                f"({portal_gate_explain_label(world, gate_id)})" for gate_id in self.gate_ids
+            )
+        return self.Resolved(
+            self.gate_ids,
+            child,
+            label,
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
+
+    class Resolved(Rule.Resolved):
+        gate_ids: tuple[str, ...]
+        child: Rule.Resolved
+        portal_label: str
+        skip_cache: ClassVar[bool] = True
+
+        @override
+        def _evaluate(self, state: CollectionState) -> bool:
+            return self.child(state)
+
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
+
+        @override
+        def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
+            color = "green" if state and self(state) else "salmon" if state else "white"
+            return [
+                {"type": "text", "text": "Portals ("},
+                {"type": "color", "color": color, "text": self.portal_label},
+                {"type": "text", "text": ")"},
+            ]
+
+        @override
+        def explain_str(self, state: CollectionState | None = None) -> str:
+            prefix = ""
+            if state is not None:
+                prefix = ("Open: " if self(state) else "Locked: ") + "portals — "
+            return prefix + self.portal_label
+
+
+def build_kill_enemy_group_rule(group: str | tuple[str, ...]) -> Rule:
+    """One AND slot: single creep, or OR among creeps in an inner tuple."""
+    if isinstance(group, str):
+        return CanBeatBoss(group)
+    if not group:
+        return True_()
+    combined = CanBeatBoss(group[0])
+    for enemy_name in group[1:]:
+        combined = combined | CanBeatBoss(enemy_name)
+    return combined
+
+
+def format_kill_enemy_group_explain(group: str | tuple[str, ...]) -> str:
+    if isinstance(group, str):
+        return group
+    if len(group) == 1:
+        return group[0]
+    return "(" + " or ".join(group) + ")"
+
+
+def build_quest_access_requirement(world: "Atlyss", quest_name: str) -> Rule:
+    from worlds.atlyss.QuestAccess import (
+        QUEST_ACCESS,
+        normalize_after_quest_names,
+        normalize_portal_gate_ids,
+        quest_uses_level_access,
+    )
+
+    spec = QUEST_ACCESS[quest_name]
+    parts: list[Rule] = []
+    for prerequisite in normalize_after_quest_names(spec.after_quest):
+        parts.append(HasQuestComplete(prerequisite))
+    if spec.kill_enemies:
+        for group in spec.kill_enemies:
+            parts.append(build_kill_enemy_group_rule(group))
+    else:
+        gate_ids = normalize_portal_gate_ids(spec.portal_gates)
+        if gate_ids:
+            parts.append(HasAnyPortalGate(gate_ids))
+        elif quest_uses_level_access(spec):
+            parts.append(CanGrindLevel(spec.min_level))
+    if not parts:
+        return True_()
+    combined = parts[0]
+    for part in parts[1:]:
+        combined = combined & part
+    return combined
+
+
+def format_quest_access_explain(world: "Atlyss", quest_name: str) -> str:
+    from worlds.atlyss.QuestAccess import (
+        QUEST_ACCESS,
+        normalize_after_quest_names,
+        normalize_portal_gate_ids,
+        quest_uses_level_access,
+    )
+
+    spec = QUEST_ACCESS[quest_name]
+    parts = [f"Quest {quest_name}"]
+    prerequisites = normalize_after_quest_names(spec.after_quest)
+    if prerequisites:
+        parts.append("after " + " and ".join(prerequisites))
+    if spec.kill_enemies:
+        joined = " and ".join(format_kill_enemy_group_explain(group) for group in spec.kill_enemies)
+        parts.append(f"beat {joined}")
+    else:
+        gate_ids = normalize_portal_gate_ids(spec.portal_gates)
+        if gate_ids:
+            if len(gate_ids) == 1:
+                parts.append(f"portals ({portal_gate_explain_label(world, gate_ids[0])})")
+            else:
+                labels = " OR ".join(
+                    f"({portal_gate_explain_label(world, gate_id)})" for gate_id in gate_ids
+                )
+                parts.append(f"portals ({labels})")
+        elif quest_uses_level_access(spec):
+            parts.append(f"reach level {spec.min_level}")
+    return parts[0] + (" — " + ", ".join(parts[1:]) if len(parts) > 1 else "")
+
+
+@dataclasses.dataclass()
 class HasQuestComplete(Rule["Atlyss"], game="Atlyss"):
     quest_name: str
 
@@ -85,25 +223,11 @@ class QuestCheck(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        from worlds.atlyss.QuestAccess import QUEST_ACCESS
-
-        _min_level, after, gate = QUEST_ACCESS[self.quest_name]
-        parts: list[Rule] = []
-        if after is not None:
-            parts.append(HasQuestComplete(after))
-        if gate is not None:
-            parts.append(HasPortalGate(gate))
-        if not parts:
-            child = True_().resolve(world)
-        else:
-            combined = parts[0]
-            for part in parts[1:]:
-                combined = combined & part
-            child = combined.resolve(world)
+        child = build_quest_access_requirement(world, self.quest_name).resolve(world)
         return self.Resolved(
             self.quest_name,
             child,
-            quest_check_explain_str(world, self.quest_name),
+            format_quest_access_explain(world, self.quest_name),
             player=world.player,
             caching_enabled=caching_enabled(world),
         )
@@ -141,15 +265,7 @@ class QuestCheck(Rule["Atlyss"], game="Atlyss"):
 
 
 def quest_check_explain_str(world: "Atlyss", quest_name: str, state: CollectionState | None = None) -> str:
-    from worlds.atlyss.QuestAccess import QUEST_ACCESS
-
-    _min_level, after, gate = QUEST_ACCESS[quest_name]
-    parts = [f"Quest {quest_name}"]
-    if after is not None:
-        parts.append(f"after {after}")
-    if gate is not None:
-        parts.append(f"portals ({portal_gate_explain_label(world, gate)})")
-    text = parts[0] + (" — " + ", ".join(parts[1:]) if len(parts) > 1 else "")
+    text = format_quest_access_explain(world, quest_name)
     if state is not None:
         rule = QuestCheck(quest_name).resolve(world)
         text = ("Reachable: " if rule(state) else "Blocked: ") + text

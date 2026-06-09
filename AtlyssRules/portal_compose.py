@@ -169,5 +169,8 @@ def build_mining_route_rule(world: "Atlyss", level: int) -> Rule:
     if level >= 4:
         return build_portal_gate_rule(world, "tuul_valley")
     if level >= 2:
-        return build_portal_gate_rule(world, "arcwood_pass")
+        return (
+            build_portal_gate_rule(world, "arcwood_pass")
+            | build_portal_gate_rule(world, "effold_terrace")
+        )
     return True_()
