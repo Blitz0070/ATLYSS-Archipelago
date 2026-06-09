@@ -80,7 +80,7 @@ def _build_static_location_rules() -> dict[str, Rule]:
         "Rude!": True_(),
         "Fashion Sense": True_(),
         "Trout Master": CanGrindFishing(10),
-        "Skill Student": True_(),
+        "Skill Student": CanGrindLevel(10),
         "Slime Diva": CanBeatBoss("Slime Diva"),
         "Lord Zuulneruda": CanBeatBoss("Lord Zuulneruda"),
         "Lord Kaluuz": CanBeatBoss("Lord Kaluuz"),
