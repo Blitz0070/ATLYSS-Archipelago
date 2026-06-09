@@ -222,10 +222,8 @@ QUEST_ACCESS: Dict[str, Tuple[int, Optional[str], Optional[str]]] = {
     "Facing Foes": (18, None, "bularr_fortress"),
     "Gatling Galius": (22, None, "bularr_fortress"),
     "The Gall of Galius": (22, "Gatling Galius", "bularr_fortress"),
-    # --- Grove nulversa (level-gated; same areas as late grove) ---
-    "Nulversa Magica": (20, None, "crescent_grove_lvl2"),
-    "Nulversa Viscera": (20, None, "crescent_grove_lvl2"),
-    "Nulversa, Greenversa!": (20, None, "crescent_grove_lvl2"),
+    # --- Grove nulversa (any one of the three in-game quests completes this AP check) ---
+    "Nulversa": (20, None, "crescent_grove_lvl2"),
 }
 
 
