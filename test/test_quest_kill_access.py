@@ -7,6 +7,22 @@ from .bases import AtlyssTestBase
 from worlds.atlyss.AtlyssRules.custom_rules import QuestCheck
 
 
+def _quest_completion_location(quest_name: str) -> str:
+    return f"Quest Completion: {quest_name}"
+
+
+def _add_quest_complete(state: CollectionState, player: int, quest_name: str) -> None:
+    """HasQuestComplete checks prog_items by Complete: name, not pool items."""
+    state.add_item(f"Complete: {quest_name}", player)
+    state.stale[player] = True
+    state.rule_builder_cache[player].clear()
+
+
+def _collect_without_sweep(state: CollectionState, item) -> None:
+    """Avoid sweep auto-collecting reachable Quest Completion event items."""
+    state.collect(item, prevent_sweep=True)
+
+
 class TestNightSpiritsKillAccess(AtlyssTestBase):
     options = {
         "goal": "slime_diva",
@@ -17,17 +33,23 @@ class TestNightSpiritsKillAccess(AtlyssTestBase):
     def test_effold_without_arcwood_reaches_night_spirits(self) -> None:
         self.world_setup()
         state = CollectionState(self.multiworld)
-        self.assertFalse(state.can_reach("Night Spirits", "Location", self.player))
+        self.assertFalse(
+            state.can_reach(_quest_completion_location("Night Spirits"), "Location", self.player),
+        )
         for item in self.get_items_by_name(["Outer Sanctum Portal", "Effold Terrace Portal"]):
             state.collect(item)
-        self.assertTrue(state.can_reach("Night Spirits", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Night Spirits"), "Location", self.player),
+        )
 
     def test_arcwood_without_effold_reaches_night_spirits(self) -> None:
         self.world_setup()
         state = CollectionState(self.multiworld)
         for item in self.get_items_by_name(["Outer Sanctum Portal", "Arcwood Pass Portal"]):
             state.collect(item)
-        self.assertTrue(state.can_reach("Night Spirits", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Night Spirits"), "Location", self.player),
+        )
 
     def test_catacombs_route_reaches_night_spirits(self) -> None:
         self.world_setup()
@@ -40,13 +62,17 @@ class TestNightSpiritsKillAccess(AtlyssTestBase):
             ]
         ):
             state.collect(item)
-        self.assertTrue(state.can_reach("Night Spirits", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Night Spirits"), "Location", self.player),
+        )
 
     def test_outer_sanctum_alone_blocked(self) -> None:
         self.world_setup()
         state = CollectionState(self.multiworld)
         state.collect(self.get_items_by_name(["Outer Sanctum Portal"])[0])
-        self.assertFalse(state.can_reach("Night Spirits", "Location", self.player))
+        self.assertFalse(
+            state.can_reach(_quest_completion_location("Night Spirits"), "Location", self.player),
+        )
 
 
 class TestDenseIngotsOrGates(AtlyssTestBase):
@@ -61,12 +87,14 @@ class TestDenseIngotsOrGates(AtlyssTestBase):
         state = CollectionState(self.multiworld)
         for item in self.get_items_by_name(["Outer Sanctum Portal", "Effold Terrace Portal"]):
             state.collect(item)
-        self.assertTrue(state.can_reach("Dense Ingots", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Dense Ingots"), "Location", self.player),
+        )
 
 
 class TestRagespearAfterQuests(AtlyssTestBase):
     options = {
-        "goal": "slime_diva",
+        "goal": "all_quests",
         "random_portals": "true",
         "equipment_progression": "unrestricted",
     }
@@ -85,14 +113,19 @@ class TestRagespearAfterQuests(AtlyssTestBase):
 
     def test_ragespear_requires_both_prerequisite_quests(self) -> None:
         self.world_setup()
+        world = self.multiworld.worlds[self.player]
         state = CollectionState(self.multiworld)
+        rule = QuestCheck("Makin' a Ragespear").resolve(world)
+
         for item in self.get_items_by_name(self._RAGESPEAR_PORTALS):
-            state.collect(item)
-        self.assertFalse(state.can_reach("Makin' a Ragespear", "Location", self.player))
-        state.collect(self.get_items_by_name(["Complete: Makin' a Mekspear"])[0])
-        self.assertFalse(state.can_reach("Makin' a Ragespear", "Location", self.player))
-        state.collect(self.get_items_by_name(["Complete: Finding Ammagon"])[0])
-        self.assertTrue(state.can_reach("Makin' a Ragespear", "Location", self.player))
+            _collect_without_sweep(state, item)
+        _add_quest_complete(state, self.player, "Communing Catacombs")
+
+        self.assertFalse(rule(state))
+        _add_quest_complete(state, self.player, "Makin' a Mekspear")
+        self.assertFalse(rule(state))
+        _add_quest_complete(state, self.player, "Finding Ammagon")
+        self.assertTrue(rule(state))
 
     def test_ragespear_explain_lists_both_prerequisites(self) -> None:
         self.world_setup()
@@ -123,7 +156,9 @@ class TestVileBladeOrKillGroups(AtlyssTestBase):
             ]
         ):
             state.collect(item)
-        self.assertTrue(state.can_reach("Makin' a Vile Blade", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Makin' a Vile Blade"), "Location", self.player),
+        )
 
     def test_vile_blade_explain_shows_or_group(self) -> None:
         self.world_setup()
@@ -151,14 +186,18 @@ class TestLevelOnlyQuestAccess(AtlyssTestBase):
     def test_call_of_fury_blocked_without_grind_access(self) -> None:
         self.world_setup()
         state = CollectionState(self.multiworld)
-        self.assertFalse(state.can_reach("Call of Fury", "Location", self.player))
+        self.assertFalse(
+            state.can_reach(_quest_completion_location("Call of Fury"), "Location", self.player),
+        )
 
     def test_call_of_fury_reachable_with_level_grind_access(self) -> None:
         self.world_setup()
         state = CollectionState(self.multiworld)
         for item in self.get_items_by_name(["Progressive Sanctum Portal"]):
             state.collect(item)
-        self.assertTrue(state.can_reach("Call of Fury", "Location", self.player))
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Call of Fury"), "Location", self.player),
+        )
 
     def test_call_of_fury_explain_mentions_level(self) -> None:
         self.world_setup()

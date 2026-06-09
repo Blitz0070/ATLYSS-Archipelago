@@ -71,50 +71,6 @@ PORTAL_GATES: Dict[str, PortalGate] = {
         ),
         11, 3,
     ),
-    "craft_mekspear": (
-        (
-            OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Effold Terrace Portal",
-        ),
-        6, 1,
-    ),
-    "craft_wizwand": (
-        (
-            OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Arcwood Pass Portal", "Crescent Road Portal",
-        ),
-        7, 1,
-    ),
-    "craft_vile_blade": (
-        (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL,
-            "Crescent Road Portal", "Effold Terrace Portal",
-        ),
-        7, 1,
-    ),
-    "craft_golem_chest": (
-        (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal"
-        ),
-        9, 1,
-    ),
-    "craft_ragespear": (
-        (
-            OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Effold Terrace Portal",
-            CATACOMBS_LVL1_PORTAL, CATACOMBS_LVL2_PORTAL, CATACOMBS_LVL3_PORTAL, "Tuul Valley Portal", "Tuul Enclave Portal", "Bularr Fortress Portal",
-        ),
-        11, 3,
-    ),
-    "craft_monolith_chest": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", GROVE_LVL1_PORTAL),
-        10, 2,
-    ),
-    "craft_firebreath_blade": (
-        (OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", GROVE_LVL1_PORTAL, GROVE_LVL2_PORTAL),
-        11, 2,
-    ),
-    "craft_follycannon": (
-        (OUTER_SANCTUM_PORTAL, "Tuul Valley Portal", "Tuul Enclave Portal", "Bularr Fortress Portal"),
-        11, 3,
-    ),
     "glyphik_route": (
         (
             OUTER_SANCTUM_PORTAL, "Arcwood Pass Portal", "Crescent Road Portal", "Crescent Keep Portal", "Luvora Garden Portal", "Tuul Valley Portal", "Tuul Enclave Portal",
@@ -286,11 +242,11 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
     "Makin' a Follycannon": QuestAccessSpec(24, after_quest="Finding Ammagon", kill_enemies=("Boomboar", ("Mekboar", "Wizboar", "Rageboar"))),
     "Makin' More Follycannons": QuestAccessSpec(24, after_quest="Makin' a Follycannon", kill_enemies=("Boomboar", ("Mekboar", "Wizboar", "Rageboar"))),
     # --- Bularr / Galius ---
-    "Reviling the Rageboars": QuestAccessSpec(14, after_quest="Finding Ammagon", kill_enemies=("Rageboar")),
-    "Reviling more Rageboars": QuestAccessSpec(14, after_quest=("Reviling the Rageboars", "Finding Ammagon"), kill_enemies=("Rageboar")),
+    "Reviling the Rageboars": QuestAccessSpec(14, after_quest="Finding Ammagon", kill_enemies=("Rageboar",)),
+    "Reviling more Rageboars": QuestAccessSpec(14, after_quest=("Reviling the Rageboars", "Finding Ammagon"), kill_enemies=("Rageboar",)),
     "Facing Foes": QuestAccessSpec(18, after_quest="Finding Ammagon", kill_enemies=("Rageboar", "Boomboar", "Warboar")),
-    "Gatling Galius": QuestAccessSpec(22, after_quest="Finding Ammagon", kill_enemies=("Galius")),
-    "The Gall of Galius": QuestAccessSpec(22, after_quest=("Finding Ammagon", "Gatling Galius"), kill_enemies=("Galius")),
+    "Gatling Galius": QuestAccessSpec(22, after_quest="Finding Ammagon", kill_enemies=("Galius",)),
+    "The Gall of Galius": QuestAccessSpec(22, after_quest=("Finding Ammagon", "Gatling Galius"), kill_enemies=("Galius",)),
     # --- Grove nulversa (any one of the three in-game quests completes this AP check) ---
     "Nulversa": QuestAccessSpec(20, portal_gates="crescent_grove_lvl2"),
 }
@@ -341,8 +297,34 @@ def _validate_area_to_gate() -> None:
         raise ValueError(f"AREA_TO_GATE references unknown gates: {sorted(unknown)}")
 
 
+def _validate_portal_gates_referenced() -> None:
+    """Every PORTAL_GATES profile must be reachable from quest/area/catalog/route rules."""
+    from .AccessData import SHOP_AP_ITEMS_PORTAL_GATE
+
+    referenced: set[str] = set(AREA_TO_GATE.values())
+    for spec in QUEST_ACCESS.values():
+        referenced.update(normalize_portal_gate_ids(spec.portal_gates))
+    referenced.add(SHOP_AP_ITEMS_PORTAL_GATE)
+    # Achievement locations (AtlyssRules/catalog.py) and Rules.py mining/fishing routes.
+    referenced.update({
+        "arcwood_pass",
+        "effold_terrace",
+        "tuul_valley",
+        "tuul_enclave",
+        "sanctum_catacombs",
+        "sanctum_catacombs_f2",
+        "sanctum_catacombs_f3",
+        "crescent_grove_colossus",
+        "crescent_grove_lvl2",
+    })
+    orphan = set(PORTAL_GATES) - referenced
+    if orphan:
+        raise ValueError(f"PORTAL_GATES never referenced: {sorted(orphan)}")
+
+
 _validate_quest_table()
 _validate_area_to_gate()
+_validate_portal_gates_referenced()
 validate_story_quest_names({name for name, _region in quests})
 
 PICKAXE_REQUIRED_QUESTS = frozenset(

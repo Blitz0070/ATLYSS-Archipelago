@@ -92,14 +92,23 @@ class TestAccessData(unittest.TestCase):
             normalize_portal_gate_ids,
         )
 
-        for quest in ("The Voice of Zuulneruda", "Purging the Undead", "Rattlecage Rage"):
+        for quest in ("The Voice of Zuulneruda", "Purging the Undead"):
             spec = QUEST_ACCESS[quest]
             self.assertEqual(spec.min_level, 6)
             self.assertEqual(spec.after_quest, "Killing Tomb")
-            self.assertEqual(normalize_after_quest_names(spec.after_quest), ("Killing Tomb",))
-            self.assertEqual(normalize_portal_gate_ids(spec.portal_gates), ("sanctum_catacombs_f2",))
+            self.assertIsNone(spec.portal_gates)
+            self.assertIsNotNone(spec.kill_enemies)
+
+        rattlecage = QUEST_ACCESS["Rattlecage Rage"]
+        self.assertEqual(rattlecage.after_quest, "Killing Tomb")
+        self.assertEqual(
+            normalize_portal_gate_ids(rattlecage.portal_gates),
+            ("sanctum_catacombs_f2",),
+        )
+
         killing_tomb = QUEST_ACCESS["Killing Tomb"]
-        self.assertEqual(normalize_portal_gate_ids(killing_tomb.portal_gates), ("sanctum_catacombs",))
+        self.assertIsNone(killing_tomb.portal_gates)
+        self.assertEqual(killing_tomb.kill_enemies, ("Mini Geist", "Geist"))
 
     def test_night_spirits_uses_kill_enemy_requirements(self) -> None:
         from worlds.atlyss.QuestAccess import QUEST_ACCESS
@@ -122,7 +131,8 @@ class TestAccessData(unittest.TestCase):
         self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Call of Fury"]))
         self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Focusin' in"]))
         self.assertFalse(quest_uses_level_access(QUEST_ACCESS["Night Spirits"]))
-        self.assertFalse(quest_uses_level_access(QUEST_ACCESS["Mastery of Strength"]))
+        self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Mastery of Strength"]))
+        self.assertTrue(quest_uses_level_access(QUEST_ACCESS["Mastery of Dexterity"]))
         self.assertFalse(quest_uses_level_access(QUEST_ACCESS["A Warm Welcome"]))
 
     def test_kill_enemy_or_groups(self) -> None:
