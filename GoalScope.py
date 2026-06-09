@@ -81,8 +81,6 @@ def _achievement_min_level(name: str, region_name: str) -> int:
             return 20
         if "(20-25)" in name:
             return 25
-    if name in {"Judgement", "Corrupted Arcana", "Holier than Thou"}:
-        return 28
     if name == "Skill Student":
         return 10
     if name == "Trout Master":
