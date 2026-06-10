@@ -17,7 +17,8 @@ from worlds.atlyss.AccessData import (
     shop_slot_tier_level,
     validate_story_quest_names,
 )
-from worlds.atlyss.Locations import portal_counts
+from worlds.atlyss.Locations import enemy_data, portal_counts
+from worlds.atlyss.Rules import _catacombs_gate_for_enemy_areas
 from worlds.atlyss.ProgressionLogic import get_location_max_tier
 from worlds.atlyss.QuestAccess import AREA_TO_GATE
 
@@ -65,8 +66,10 @@ class TestAccessData(unittest.TestCase):
 
     def test_quest_requires_pickaxe(self) -> None:
         self.assertTrue(quest_requires_pickaxe("Dense Ingots"))
-        self.assertTrue(quest_requires_pickaxe("Makin' a Mekspear"))
-        self.assertTrue(quest_requires_pickaxe("Summore' Golem Chestpieces"))
+        self.assertTrue(quest_requires_pickaxe("Amberite Ingots"))
+        self.assertTrue(quest_requires_pickaxe("Sapphite Ingots"))
+        self.assertFalse(quest_requires_pickaxe("Makin' a Mekspear"))
+        self.assertFalse(quest_requires_pickaxe("Summore' Golem Chestpieces"))
         self.assertFalse(quest_requires_pickaxe("Summore' Spectral Powder!"))
         self.assertFalse(quest_requires_pickaxe("A Warm Welcome"))
 
@@ -153,6 +156,33 @@ class TestAccessData(unittest.TestCase):
             ("Makin' a Mekspear", "Finding Ammagon"),
         )
         self.assertEqual(normalize_after_quest_names("Killing Tomb"), ("Killing Tomb",))
+
+    def test_catacombs_enemy_gate_uses_shallowest_floor(self) -> None:
+        self.assertEqual(
+            _catacombs_gate_for_enemy_areas(("Sanctum Catacombs lvl 1", "Sanctum Catacombs lvl 2")),
+            "sanctum_catacombs",
+        )
+        self.assertEqual(
+            _catacombs_gate_for_enemy_areas(("Sanctum Catacombs lvl 2", "Sanctum Catacombs lvl 3")),
+            "sanctum_catacombs_f2",
+        )
+        self.assertEqual(
+            _catacombs_gate_for_enemy_areas(("Sanctum Catacombs lvl 3",)),
+            "sanctum_catacombs_f3",
+        )
+
+    def test_no_grove_enemy_spans_multiple_floors(self) -> None:
+        """Grove uses per-area OR in can_beat_enemy; no max-depth gate helper exists yet."""
+        grove_floors: dict[str, set[str]] = {}
+        for enemy_name, (_level, areas) in enemy_data.items():
+            grove_areas = [area for area in areas if area.startswith("Crescent Grove")]
+            if not grove_areas:
+                continue
+            grove_floors[enemy_name] = set(grove_areas)
+        multi_floor = {
+            name: floors for name, floors in grove_floors.items() if len(floors) > 1
+        }
+        self.assertEqual(multi_floor, {})
 
     def test_location_max_tier_named_sanctum_quests(self) -> None:
         self.assertGreaterEqual(get_location_max_tier("Makin' a Wizwand", "Sanctum"), 2)

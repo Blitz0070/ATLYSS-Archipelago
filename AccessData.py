@@ -130,15 +130,11 @@ def validate_story_quest_names(quest_names: set[str]) -> None:
 
 
 def quest_requires_pickaxe(quest_name: str) -> bool:
-    """Ore turn-ins and forge craft chains need a pickaxe to gather materials."""
-    if quest_name.endswith(" Ingots"):
-        return True
-    if quest_name.startswith("Makin'"):
-        return True
+    """Mining turn-in quests only (mob-drop Sally forge quests use kill_enemies, not pickaxe)."""
     return quest_name in (
-        "Summore' Golem Chestpieces",
-        "Summore' Monolith Chestpieces",
-        "Summore' Firebreath Blades",
+        "Dense Ingots",
+        "Amberite Ingots",
+        "Sapphite Ingots",
     )
 
 

@@ -121,12 +121,39 @@ def has_area_for_gameplay(state, player, area: str) -> bool:
     return has_quest(state, player, story_quest)
 
 
+def _catacombs_floor_depth(area: str) -> int:
+    if "lvl 3" in area:
+        return 3
+    if "lvl 2" in area:
+        return 2
+    return 1
+
+
 def _catacombs_gate_for_enemy_areas(areas) -> str:
-    if any("lvl 3" in area for area in areas):
+    """Shallowest listed floor — multi-floor spawns are OR routes (e.g. Toxin on f2 or f3)."""
+    depth = min(_catacombs_floor_depth(area) for area in areas)
+    if depth >= 3:
         return "sanctum_catacombs_f3"
-    if any("lvl 2" in area for area in areas):
+    if depth >= 2:
         return "sanctum_catacombs_f2"
     return "sanctum_catacombs"
+
+
+def _catacombs_story_access_ok(state, player, areas) -> bool:
+    if any(has_area_for_gameplay(state, player, area) for area in areas):
+        return True
+    gate = _catacombs_gate_for_enemy_areas(areas)
+    if not has_portal_gate(state, player, gate):
+        return False
+    # Lvl 1 has no AREA_STORY_QUEST — min-depth portal is enough (Killing Tomb geists).
+    if gate == "sanctum_catacombs":
+        return True
+    # Match portal_gates quest bands: f2 after Killing Tomb, f3 after Voice (Rattlecage / Consumed Madness).
+    if gate == "sanctum_catacombs_f3":
+        return has_quest(state, player, "The Voice of Zuulneruda")
+    if gate == "sanctum_catacombs_f2":
+        return has_quest(state, player, "Killing Tomb")
+    return False
 
 
 def has_all_areas(state, player, areas) -> bool:
@@ -200,7 +227,7 @@ def can_beat_enemy(state, player, enemy_name) -> bool:
         gate = _catacombs_gate_for_enemy_areas(areas)
         if not has_portal_gate(state, player, gate):
             return False
-        return has_quest(state, player, "Communing Catacombs")
+        return _catacombs_story_access_ok(state, player, areas)
     return any(has_area_for_gameplay(state, player, area) for area in areas)
 
 

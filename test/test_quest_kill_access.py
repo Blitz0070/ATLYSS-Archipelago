@@ -206,6 +206,164 @@ class TestLevelOnlyQuestAccess(AtlyssTestBase):
         self.assertIn("reach level 4", resolved.base_explain)
 
 
+class TestKillingTombKillEnemiesF1(AtlyssTestBase):
+    options = {
+        "goal": "slime_diva",
+        "random_portals": "true",
+        "equipment_progression": "unrestricted",
+    }
+
+    def test_f1_portals_reach_killing_tomb_kill_quest(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(
+            [
+                "Outer Sanctum Portal",
+                "Arcwood Pass Portal",
+                "Sanctum Catacombs lvl 1 Portal",
+            ]
+        ):
+            _collect_without_sweep(state, item)
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Killing Tomb"), "Location", self.player),
+        )
+
+    def test_killing_tomb_explain_lists_geists(self) -> None:
+        self.world_setup()
+        world = self.multiworld.worlds[self.player]
+        resolved = QuestCheck("Killing Tomb").resolve(world)
+        self.assertIn("Mini Geist", resolved.base_explain)
+        self.assertIn("Geist", resolved.base_explain)
+
+    def test_arcwood_without_catacombs_blocked(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(["Outer Sanctum Portal", "Arcwood Pass Portal"]):
+            _collect_without_sweep(state, item)
+        self.assertFalse(
+            state.can_reach(_quest_completion_location("Killing Tomb"), "Location", self.player),
+        )
+
+
+class TestPurgingUndeadAfterKillingTomb(AtlyssTestBase):
+    options = {
+        "goal": "slime_diva",
+        "random_portals": "true",
+        "equipment_progression": "unrestricted",
+    }
+
+    _F2_CATACOMBS_PORTALS = [
+        "Outer Sanctum Portal",
+        "Arcwood Pass Portal",
+        "Sanctum Catacombs lvl 1 Portal",
+        "Sanctum Catacombs lvl 2 Portal",
+    ]
+
+    def test_purging_reachable_after_killing_tomb_without_communing_prog(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(self._F2_CATACOMBS_PORTALS):
+            _collect_without_sweep(state, item)
+        _add_quest_complete(state, self.player, "Killing Tomb")
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Purging the Undead"), "Location", self.player),
+        )
+
+    def test_voice_of_zuulneruda_same_f2_band(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(self._F2_CATACOMBS_PORTALS):
+            _collect_without_sweep(state, item)
+        _add_quest_complete(state, self.player, "Killing Tomb")
+        self.assertTrue(
+            state.can_reach(
+                _quest_completion_location("The Voice of Zuulneruda"),
+                "Location",
+                self.player,
+            ),
+        )
+
+    def test_purging_blocked_without_killing_tomb(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(self._F2_CATACOMBS_PORTALS):
+            _collect_without_sweep(state, item)
+        self.assertFalse(
+            state.can_reach(_quest_completion_location("Purging the Undead"), "Location", self.player),
+        )
+
+
+class TestEradicatingUndeadAfterVoice(AtlyssTestBase):
+    options = {
+        "goal": "all_quests",
+        "random_portals": "true",
+        "equipment_progression": "unrestricted",
+    }
+
+    _F3_CATACOMBS_PORTALS = [
+        "Outer Sanctum Portal",
+        "Arcwood Pass Portal",
+        "Sanctum Catacombs lvl 1 Portal",
+        "Sanctum Catacombs lvl 2 Portal",
+        "Sanctum Catacombs lvl 3 Portal",
+    ]
+
+    def test_eradicating_reachable_after_voice_without_communing_prog(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(self._F3_CATACOMBS_PORTALS):
+            _collect_without_sweep(state, item)
+        _add_quest_complete(state, self.player, "The Voice of Zuulneruda")
+        self.assertTrue(
+            state.can_reach(
+                _quest_completion_location("Eradicating the Undead"),
+                "Location",
+                self.player,
+            ),
+        )
+
+    def test_eradicating_blocked_without_voice(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(self._F3_CATACOMBS_PORTALS):
+            _collect_without_sweep(state, item)
+        self.assertFalse(
+            state.can_reach(
+                _quest_completion_location("Eradicating the Undead"),
+                "Location",
+                self.player,
+            ),
+        )
+
+
+class TestMakinQuestsNoPickaxeGate(AtlyssTestBase):
+    options = {
+        "goal": "slime_diva",
+        "random_portals": "true",
+        "equipment_progression": "unrestricted",
+    }
+
+    def test_mekspear_without_pickaxe(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(["Outer Sanctum Portal", "Effold Terrace Portal", "Tuul Valley Portal"]):
+            state.collect(item)
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Makin' a Mekspear"), "Location", self.player),
+        )
+
+    def test_wizwand_without_pickaxe(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(
+            ["Outer Sanctum Portal", "Arcwood Pass Portal", "Crescent Road Portal", "Tuul Valley Portal"]
+        ):
+            state.collect(item)
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Makin' a Wizwand"), "Location", self.player),
+        )
+
+
 class TestNightSpiritsExplain(AtlyssTestBase):
     options = {
         "goal": "slime_diva",
