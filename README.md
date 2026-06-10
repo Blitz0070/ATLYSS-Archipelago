@@ -36,18 +36,6 @@ The in-game BepInEx client is on Thunderstore as [**AtlyssArchipelago**](https:/
 
 6. **Connect in-game** — Launch ATLYSS via **Start modded**, go into **Settings** > **Archipelago**, enter your server address, slot name, and password as needed. Go into **Singleplayer** > **Create your Character**, **Select Character** afterwards and press F5 to connect to your Archipelago server.
 
-## Configuration
-
-Use the [Atlyss player options page](https://archipelago.gg/games/Atlyss/player-options) on WebHost, or edit a YAML with `game: Atlyss`. Notable options:
-
-* **Goal** — single boss, all bosses, all quests, or level 32
-* **Random Portals** — progressive portal lines (default) vs per-area portal items
-* **Shop Sanity** — shop purchases send multiworld checks (on by default)
-* **Achievements** — track in-game achievements as locations (on by default)
-* **Equipment Progression** — gated tier logic vs unrestricted gear pool
-
-See `docs/setup_en.md` in this repo for the full setup guide shipped in the `.apworld`.
-
 ## Credits
 
 This project was made possible with help from:
