@@ -49,7 +49,8 @@ This project was made possible with help from:
 - AtlyssModdingCentral Discord server
 - Mickemoose - Technical assistance and code contributions  
 - Catman - Guidance and project support
-- Nichologeam - AzraeL's Coding Partner (major help with this project)
-- AzraeL0534 - Previous Project Lead and Creator
+- Nichologeam - Azrael's Coding partner (major help with this project)
+- AzraeL0534 - Original project creator
 - Maude - Patching up the logic in separate fork
+- Blitz0 - Current Project lead and maintainer
 - Twilly - Blitz's testing buddy

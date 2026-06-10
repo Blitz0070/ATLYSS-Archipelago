@@ -30,7 +30,7 @@ class AtlyssWeb(WebWorld):
         "English",
         "setup_en.md",
         "setup/en",
-        ["Azrael0534", "Nichologeam", "Sterlia", "SW_CreeperKing", "Blitz0"],
+        ["Blitz0", "Nichologeam", "Sterlia", "SW_CreeperKing", "Azrael0534"],
     )]
     game_info_languages = ["en"]
     option_groups = atlyss_option_groups
