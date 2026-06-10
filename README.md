@@ -52,3 +52,4 @@ This project was made possible with help from:
 - Nichologeam - AzraeL's Coding Partner (major help with this project)
 - AzraeL0534 - Previous Project Lead and Creator
 - Maude - Patching up the logic in separate fork
+- Twilly - Blitz's testing buddy
