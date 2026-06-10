@@ -6,7 +6,7 @@ Archipelago randomizer implementation for ATLYSS. Enables multiworld randomizer 
 
 This is a **fork** of [AzraeL0534's original Atlyss Archipelago mod and apworld](https://thunderstore.io/c/atlyss/p/AzraeL0534/AtlyssArchipelago/), actively maintained and **still in development** under **blitz0070** (Rule Builder logic, progression options, and ongoing fixes). Expect changes between releases.
 
-The in-game BepInEx client is on Thunderstore as [**AtlyssArchipelago**](https://thunderstore.io/c/atlyss/p/blitz0070/AtlyssArchipelago/) (author **blitz0070**). Legacy package `AzraeL0534-AtlyssArchipelago` is deprecated.
+The in-game BepInEx client is on Thunderstore as [**AtlyssArchipelago**](https://thunderstore.io/c/atlyss/p/blitz0070/AtlyssArchipelago/) (author **blitz0070**).
 
 ## Installation
 
