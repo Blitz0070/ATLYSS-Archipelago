@@ -18,7 +18,7 @@
 
 1. Install [BepInEx](https://docs.bepinex.dev/) for ATLYSS and run the game once so folders are
    created.
-2. Place **AtlyssArchipelagoWIP.dll** (release build) in
+2. Place **AtlyssArchipelago.dll** (release build) in
    `ATLYSS/BepInEx/plugins/` (or the Thunderstore mod folder if you use that layout).
 3. Launch the game modded at least once before connecting.
 
