@@ -7,8 +7,13 @@ from BaseClasses import CollectionState
 
 from .bases import AtlyssTestBase
 from worlds.atlyss.AtlyssRules.custom_rules import CanAccessAreaGameplay
-from worlds.atlyss.AtlyssRules.portal_compose import build_portal_gate_rule, build_shop_slot_rule
-from worlds.atlyss.Rules import has_area_for_gameplay
+from worlds.atlyss.AtlyssRules.portal_compose import (
+    build_can_beat_enemy_rule,
+    build_portal_gate_rule,
+    build_shop_slot_rule,
+)
+from worlds.atlyss.Locations import enemy_data
+from worlds.atlyss.Rules import can_beat_enemy, has_area_for_gameplay
 from worlds.atlyss.AccessData import parse_shop_buy_location
 from worlds.atlyss.QuestAccess import PORTAL_GATES
 from worlds.atlyss.Rules import has_portal_gate, has_shop_slot_progress
@@ -83,3 +88,18 @@ class TestPortalGateParity(AtlyssTestBase):
             with self.subTest(gate_id=gate_id):
                 composed = build_portal_gate_rule(world, gate_id).resolve(world)
                 self.assertEqual(composed(state), has_portal_gate(state, self.player, gate_id))
+
+    def test_can_beat_enemy_composed_matches_helper(self) -> None:
+        for random_portals in (False, True):
+            with self.subTest(random_portals=random_portals):
+                self.options = {**self.options, "random_portals": "true" if random_portals else "false"}
+                self.world_setup()
+                world = self.multiworld.worlds[self.player]
+                state = CollectionState(self.multiworld)
+                for enemy_name in enemy_data:
+                    with self.subTest(enemy=enemy_name):
+                        composed = build_can_beat_enemy_rule(world, enemy_name).resolve(world)
+                        self.assertEqual(
+                            composed(state),
+                            can_beat_enemy(state, self.player, enemy_name),
+                        )

@@ -73,6 +73,12 @@ class Atlyss(CachedRuleBuilderWorld):
     topology_present = True
     ut_can_gen_without_yaml = True
     gen_puml = False
+    # External PopTracker pack (ATLYSS-AP-PopTracker). UT uses map JSON + images from pack path.
+    tracker_world: ClassVar[dict[str, object]] = {
+        "external_pack_key": "atlyss_poptracker_path",
+        "map_page_maps": "maps/maps.json",
+        "map_page_locations": "locations/locations.json",
+    }
 
     def __init__(self, multiworld: "MultiWorld", player: int):
         super().__init__(multiworld, player)

@@ -78,8 +78,8 @@ class TestPortalExplain(AtlyssTestBase):
     def test_quest_explain_mentions_portals(self) -> None:
         self.world_setup()
         world = self.multiworld.worlds[self.player]
-        text = quest_check_explain_str(world, "Wicked Wizboars")
-        self.assertIn("Wicked Wizboars", text)
+        text = quest_check_explain_str(world, "Dense Ingots")
+        self.assertIn("Dense Ingots", text)
         self.assertIn("Progressive", text)
 
     def test_wicked_wizboars_location_rule_is_quest_check_resolved(self) -> None:

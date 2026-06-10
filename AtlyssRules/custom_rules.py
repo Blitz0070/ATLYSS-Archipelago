@@ -12,10 +12,12 @@ from rule_builder.rules import Has, Rule, True_
 
 from .portal_compose import (
     build_area_gameplay_rule,
+    build_can_beat_enemy_rule,
     build_fishing_route_rule,
     build_mining_route_rule,
     build_portal_gate_rule,
     build_shop_slot_rule,
+    can_beat_enemy_explain_label,
     caching_enabled,
     portal_gate_explain_label,
 )
@@ -142,10 +144,10 @@ def build_kill_enemy_group_rule(group: str | tuple[str, ...]) -> Rule:
 
 def format_kill_enemy_group_explain(group: str | tuple[str, ...]) -> str:
     if isinstance(group, str):
-        return group
+        return can_beat_enemy_explain_label(group)
     if len(group) == 1:
-        return group[0]
-    return "(" + " or ".join(group) + ")"
+        return can_beat_enemy_explain_label(group[0])
+    return "(" + " or ".join(can_beat_enemy_explain_label(name) for name in group) + ")"
 
 
 def build_quest_access_requirement(world: "Atlyss", quest_name: str) -> Rule:
@@ -371,29 +373,41 @@ class CanBeatBoss(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return self.Resolved(self.enemy_name, player=world.player, caching_enabled=caching_enabled(world))
+        child = build_can_beat_enemy_rule(world, self.enemy_name).resolve(world)
+        return self.Resolved(
+            self.enemy_name,
+            child,
+            can_beat_enemy_explain_label(self.enemy_name),
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
 
     class Resolved(Rule.Resolved):
         enemy_name: str
+        child: Rule.Resolved
+        route_label: str
+        skip_cache: ClassVar[bool] = True
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            from worlds.atlyss.Rules import can_beat_enemy
+            return self.child(state)
 
-            return can_beat_enemy(state, self.player, self.enemy_name)
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
 
         @override
         def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
             color = "green" if state and self(state) else "salmon"
             return [
                 {"type": "text", "text": "Beat "},
-                {"type": "color", "color": color, "text": self.enemy_name},
+                {"type": "color", "color": color, "text": self.route_label},
             ]
 
         @override
         def explain_str(self, state: CollectionState | None = None) -> str:
             prefix = "Beat " if state is None or self(state) else "Cannot beat "
-            return prefix + self.enemy_name
+            return prefix + self.route_label
 
 
 @dataclasses.dataclass()

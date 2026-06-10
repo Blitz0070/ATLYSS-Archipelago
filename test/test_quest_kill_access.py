@@ -164,7 +164,9 @@ class TestVileBladeOrKillGroups(AtlyssTestBase):
         self.world_setup()
         world = self.multiworld.worlds[self.player]
         resolved = QuestCheck("Makin' a Vile Blade").resolve(world)
-        self.assertIn("Mouth or Maw", resolved.base_explain)
+        self.assertIn("Mouth", resolved.base_explain)
+        self.assertIn("Maw", resolved.base_explain)
+        self.assertIn(" or ", resolved.base_explain)
         self.assertIn("Slimek", resolved.base_explain)
         self.assertIn("Deathgel", resolved.base_explain)
 
@@ -351,6 +353,20 @@ class TestMakinQuestsNoPickaxeGate(AtlyssTestBase):
         self.assertTrue(
             state.can_reach(_quest_completion_location("Makin' a Mekspear"), "Location", self.player),
         )
+
+    def test_mekspear_tuul_route_without_crescent_road(self) -> None:
+        """Mekboar is Tuul Valley OR Crescent Keep — Crescent Road must not be required."""
+        self.world_setup()
+        world = self.multiworld.worlds[self.player]
+        state = CollectionState(self.multiworld)
+        for item in self.get_items_by_name(["Outer Sanctum Portal", "Effold Terrace Portal", "Tuul Valley Portal"]):
+            _collect_without_sweep(state, item)
+        self.assertTrue(
+            state.can_reach(_quest_completion_location("Makin' a Mekspear"), "Location", self.player),
+        )
+        resolved = QuestCheck("Makin' a Mekspear").resolve(world)
+        self.assertIn("Tuul Valley", resolved.base_explain)
+        self.assertNotIn("Crescent Road", resolved.base_explain)
 
     def test_wizwand_without_pickaxe(self) -> None:
         self.world_setup()
