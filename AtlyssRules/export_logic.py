@@ -79,6 +79,7 @@ def _atlyss_rule_template(access_rule: Rule.Resolved) -> Rule["Atlyss"] | None:
         CanAccessAreaGameplay,
         CanBeatBoss,
         CanGrindLevel,
+        CanGrindMineLevel,
         HasPortalGate,
         HasProgressionItem,
         HasQuestComplete,
@@ -97,6 +98,8 @@ def _atlyss_rule_template(access_rule: Rule.Resolved) -> Rule["Atlyss"] | None:
         return ShopSlotCheck(access_rule.merchant, access_rule.slot)
     if name == "CanGrindLevel":
         return CanGrindLevel(access_rule.level)
+    if name == "CanGrindMineLevel":
+        return CanGrindMineLevel(access_rule.level)
     if name == "CanBeatBoss":
         return CanBeatBoss(access_rule.enemy_name)
     if name == "HasProgressionItem":

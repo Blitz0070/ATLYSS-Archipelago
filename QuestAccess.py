@@ -119,6 +119,10 @@ def get_portal_gate(gate_id: str) -> PortalGate:
 
 PortalGateRef = Union[str, Tuple[str, ...]]
 
+# One AND slot: str = one gate; inner tuple = OR among those gates.
+PortalGateGroup = Union[str, Tuple[str, ...]]
+PortalGateRequirements = Union[str, Tuple[PortalGateGroup, ...]]
+
 # One AND slot: str = must reach that creep; inner tuple = reach any one (OR).
 KillEnemyGroup = Union[str, Tuple[str, ...]]
 KillEnemyRequirements = Tuple[KillEnemyGroup, ...]
@@ -134,6 +138,7 @@ class QuestAccessSpec(NamedTuple):
     after_quest: Optional[AfterQuestRef] = None
     portal_gates: Optional[PortalGateRef] = None
     kill_enemies: Optional[KillEnemyRequirements] = None
+    portal_gates_all: Optional[PortalGateRequirements] = None
 
 
 def normalize_after_quest_names(after_quest: Optional[AfterQuestRef]) -> Tuple[str, ...]:
@@ -154,6 +159,29 @@ def normalize_portal_gate_ids(portal_gates: Optional[PortalGateRef]) -> Tuple[st
     return portal_gates
 
 
+def normalize_portal_gate_groups(
+    portal_gates_all: Optional[PortalGateRequirements],
+) -> Tuple[PortalGateGroup, ...]:
+    if portal_gates_all is None:
+        return ()
+    if isinstance(portal_gates_all, str):
+        return (portal_gates_all,)
+    return portal_gates_all
+
+
+def iter_portal_gate_ids_from_groups(groups: Tuple[PortalGateGroup, ...]) -> Tuple[str, ...]:
+    """Flatten every gate id referenced in portal_gates_all AND/OR groups."""
+    names: list[str] = []
+    for group in groups:
+        if isinstance(group, str):
+            names.append(group)
+        elif isinstance(group, tuple):
+            names.extend(group)
+        else:
+            raise TypeError(f"Invalid portal_gates_all group type: {type(group)!r}")
+    return tuple(names)
+
+
 def iter_kill_enemy_names(kill_enemies: KillEnemyRequirements) -> Tuple[str, ...]:
     """Flatten every creep name referenced in kill_enemies groups."""
     names: list[str] = []
@@ -168,18 +196,20 @@ def iter_kill_enemy_names(kill_enemies: KillEnemyRequirements) -> Tuple[str, ...
 
 
 def quest_uses_level_access(spec: QuestAccessSpec) -> bool:
-    """Level-only quests: no kill_enemies or portal_gates; min_level > 1 uses CanGrindLevel."""
+    """Level-only quests: no kill_enemies or portal gates; min_level > 1 uses CanGrindLevel."""
     return (
         spec.min_level > 1
         and not spec.kill_enemies
         and not normalize_portal_gate_ids(spec.portal_gates)
+        and not normalize_portal_gate_groups(spec.portal_gates_all)
     )
 
 
 # kill_enemies: AND between top-level entries; str = one creep, tuple = OR among those creeps.
 # after_quest: str = one prerequisite; tuple = all prerequisites (AND).
 # portal_gates: OR between routes when multiple gate ids are given.
-# min_level only: no kill_enemies and no portal_gates, min_level > 1 → CanGrindLevel (same model as Reach Level N).
+# portal_gates_all: AND between top-level entries; str = one gate; inner tuple = OR among gates.
+# min_level only: no kill_enemies and no portal gates, min_level > 1 → CanGrindLevel (same model as Reach Level N).
 QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
     # --- Tutorial / main story ---
     "A Warm Welcome": QuestAccessSpec(1),
@@ -208,6 +238,7 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
     "Consumed Madness": QuestAccessSpec(12, after_quest="The Voice of Zuulneruda", portal_gates="sanctum_catacombs_f3"),
     "Eradicating the Undead": QuestAccessSpec(12, after_quest="The Voice of Zuulneruda", kill_enemies=("Miasma", "Poltergeist", "Hellsludge")),
     "Call of Fury": QuestAccessSpec(4),
+    "Cold Shoulder": QuestAccessSpec(4),
     "Focusin' in": QuestAccessSpec(4),
     "Huntin' Hogs": QuestAccessSpec(7, after_quest="A Warm Welcome", kill_enemies=("Mekboar",)),
     "Wicked Wizboars": QuestAccessSpec(10, kill_enemies=("Wizboar",)),
@@ -219,7 +250,7 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
     # --- Mining turn-ins ---
     "Dense Ingots": QuestAccessSpec(1, portal_gates=("arcwood_pass", "effold_terrace")),
     "Amberite Ingots": QuestAccessSpec(6, after_quest="Dense Ingots", portal_gates=("tuul_valley", "crescent_keep")),
-    "Sapphite Ingots": QuestAccessSpec(8, after_quest="Amberite Ingots", portal_gates=("arcwood_pass", "effold_terrace", "tuul_valley", "tuul_enclave")),
+    "Sapphite Ingots": QuestAccessSpec(8, after_quest="Amberite Ingots", portal_gates="tuul_enclave"),
     # --- Crafting chains ---
     "Makin' a Mekspear": QuestAccessSpec(7, kill_enemies=("Mekboar", "Slimek")),
     "Makin' More Mekspears": QuestAccessSpec(7, after_quest="Makin' a Mekspear", kill_enemies=("Mekboar", "Slimek")),
@@ -255,7 +286,11 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
 def _validate_quest_table() -> None:
     from .Locations import enemy_data
 
-    quest_names = {name for name, _region in quests}
+    from .Locations import factory_missing_quests
+
+    quest_names = {name for name, _region in quests} | {
+        name for name, _region in factory_missing_quests
+    }
     missing = quest_names - QUEST_ACCESS.keys()
     extra = QUEST_ACCESS.keys() - quest_names
     if missing:
@@ -263,11 +298,23 @@ def _validate_quest_table() -> None:
     if extra:
         raise ValueError(f"QUEST_ACCESS unknown quests: {sorted(extra)}")
     for spec in QUEST_ACCESS.values():
-        if spec.kill_enemies and spec.portal_gates:
+        if spec.kill_enemies and (spec.portal_gates or spec.portal_gates_all):
             raise ValueError("Quest access cannot set both kill_enemies and portal_gates")
-        for gate_id in normalize_portal_gate_ids(spec.portal_gates):
+        for gate_id in (
+            normalize_portal_gate_ids(spec.portal_gates)
+            + iter_portal_gate_ids_from_groups(normalize_portal_gate_groups(spec.portal_gates_all))
+        ):
             if gate_id not in PORTAL_GATES:
                 raise ValueError(f"Unknown portal gate id: {gate_id}")
+        for group in normalize_portal_gate_groups(spec.portal_gates_all):
+            if isinstance(group, tuple):
+                if not group:
+                    raise ValueError("portal_gates_all OR group cannot be empty")
+                for gate_id in group:
+                    if not isinstance(gate_id, str):
+                        raise TypeError(f"Invalid portal_gates_all OR entry: {gate_id!r}")
+            elif not isinstance(group, str):
+                raise TypeError(f"Invalid portal_gates_all group type: {type(group)!r}")
         if spec.kill_enemies:
             for group in spec.kill_enemies:
                 if isinstance(group, str):
@@ -304,6 +351,9 @@ def _validate_portal_gates_referenced() -> None:
     referenced: set[str] = set(AREA_TO_GATE.values())
     for spec in QUEST_ACCESS.values():
         referenced.update(normalize_portal_gate_ids(spec.portal_gates))
+        referenced.update(
+            iter_portal_gate_ids_from_groups(normalize_portal_gate_groups(spec.portal_gates_all))
+        )
     referenced.add(SHOP_AP_ITEMS_PORTAL_GATE)
     # Achievement locations (AtlyssRules/catalog.py) and Rules.py mining/fishing routes.
     referenced.update({

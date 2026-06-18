@@ -61,6 +61,11 @@ quests = [
     ["Sapphite Ingots", "Sanctum"]
 ]
 
+# Factory omitted; append at end of location_dict so existing AP ids stay stable.
+factory_missing_quests = [
+    ["Cold Shoulder", "Sanctum"],
+]
+
 levels = [
     ["Reach Level 2", "Menu"],
     ["Reach Level 4", "Menu"],
@@ -194,6 +199,7 @@ location_dict = [
     *[items[0] for items in achievements],
     *[items[0] for items in bosses],
     *[items[0] for items in profession_tool_buys],
+    *[items[0] for items in factory_missing_quests],
 ]
 
 location_grind_data = [
@@ -313,7 +319,8 @@ from typing import Dict, Set
 _HIGH_LEVEL_JUNK_MILESTONES = frozenset({"Reach Level 28", "Reach Level 30", "Reach Level 32"})
 
 location_name_groups: Dict[str, Set[str]] = {
-    "Quests": {name for name, _region in quests},
+    "Quests": {name for name, _region in quests}
+    | {name for name, _region in factory_missing_quests},
     "Levels": {name for name, _region in levels},
     "Shops": {name for name, _region in merchants},
     "Professions": {name for name, _region in professions},
