@@ -220,25 +220,6 @@ location_grind_data = [
     ["Crescent Grove lvl 2", 20, 25]
 ]
 
-fishing_grind_data = [
-    ["Sanctum", 1, 3],
-    ["Arcwood Pass", 3, 6],
-    ["Crescent Road", 6, 10]
-]
-
-mining_grind_data = [
-    ["Arcwood Pass", 1, 2],
-    ["Effold Terrace", 1, 2],
-    ["Arcwood Pass", 2, 3],
-    ["Effold Terrace", 2, 3],
-    ["Outer Sanctum", 2, 3],
-    ["Crescent Keep", 2, 3],
-    ["Tuul Enclave", 2, 3],
-    ["Tuul Valley", 3, 6],
-    ["Crescent Keep", 3, 6],
-    ["Tuul Enclave", 6, 10]
-]
-
 enemy_data = {
     "Lesser Wisp": [1, ["Outer Sanctum", "Arcwood Pass", "Sanctum Catacombs lvl 1"]],
     "Slime": [1, ["Outer Sanctum", "Arcwood Pass", "Effold Terrace"]],

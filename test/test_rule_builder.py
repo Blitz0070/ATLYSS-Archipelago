@@ -24,7 +24,7 @@ TUUL_VALLEY_ONLY_RANDOM_PORTALS = (
 
 LATE_MINING_CHECKS = tuple(f"Mining Lv. {level}" for level in range(7, 11))
 EARLY_MINING_CHECKS = ("Mining Lv. 1", "Mining Lv. 2")
-# AP route bands: Lv 2–3 arcwood|effold; Lv 4–6 tuul_valley; Lv 7+ tuul_enclave.
+# Mining train bands: Lv 1 pickaxe; Lv 2–3 hefty|dense routes; Lv 3–6 amberite; Lv 6–10 sapphite (MiningData).
 EARLY_ROUTE_MINING_CHECKS = ("Mining Lv. 2", "Mining Lv. 3")
 MID_MINING_CHECKS = tuple(f"Mining Lv. {level}" for level in range(4, 7))
 
@@ -41,6 +41,15 @@ TUUL_ENCLAVE_ROUTE_RANDOM_PORTALS = (
     "Tuul Valley Portal",
     "Tuul Enclave Portal",
 )
+CRESCENT_ROAD_ROUTE_RANDOM_PORTALS = (
+    "Outer Sanctum Portal",
+    "Arcwood Pass Portal",
+    "Crescent Road Portal",
+)
+
+EARLY_FISHING_CHECKS = ("Fishing Lv. 2", "Fishing Lv. 3")
+MID_FISHING_CHECKS = tuple(f"Fishing Lv. {level}" for level in range(4, 7))
+LATE_FISHING_CHECKS = tuple(f"Fishing Lv. {level}" for level in range(7, 11))
 
 
 def _mark_quest_complete(state: CollectionState, player: int, quest_name: str) -> None:
@@ -179,6 +188,69 @@ class TestRuleCacheInvalidation(AtlyssTestBase):
         self.assertTrue(state.can_reach("Wicked Wizboars", "Location", self.player))
 
 
+class TestEarlyMidFishingChecks(AtlyssTestBase):
+    """Fishing Lv. 1–10 spot train bands (random portals)."""
+
+    options = {
+        "goal": "slime_diva",
+        "random_portals": "true",
+        "equipment_progression": "unrestricted",
+        "profession_tools": "pool",
+    }
+
+    def _collect_rod(self, state: CollectionState) -> None:
+        for item in self.get_items_by_name(["Fishing Rod"]):
+            state.collect(item)
+
+    def _collect_named_portals(self, state: CollectionState, portal_names: tuple[str, ...]) -> None:
+        for item in self.get_items_by_name(list(portal_names)):
+            state.collect(item)
+
+    def test_fishing_lv1_requires_rod_only(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        self.assertFalse(state.can_reach("Fishing Lv. 1", "Location", self.player))
+        self._collect_rod(state)
+        self.assertTrue(state.can_reach("Fishing Lv. 1", "Location", self.player))
+
+    def test_sanctum_spot_unlocks_fishing_two_three(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        self._collect_rod(state)
+        for check_name in EARLY_FISHING_CHECKS:
+            with self.subTest(check=check_name):
+                self.assertTrue(state.can_reach(check_name, "Location", self.player))
+
+    def test_arcwood_unlocks_mid_blocks_late(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        self._collect_rod(state)
+        self._collect_named_portals(state, ARCWOOD_ROUTE_RANDOM_PORTALS)
+        for check_name in MID_FISHING_CHECKS:
+            with self.subTest(check=check_name):
+                self.assertTrue(state.can_reach(check_name, "Location", self.player))
+        for check_name in LATE_FISHING_CHECKS:
+            with self.subTest(check=check_name):
+                self.assertFalse(state.can_reach(check_name, "Location", self.player))
+
+    def test_rod_only_cannot_reach_mid_fishing(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        self._collect_rod(state)
+        for check_name in MID_FISHING_CHECKS:
+            with self.subTest(check=check_name):
+                self.assertFalse(state.can_reach(check_name, "Location", self.player))
+
+    def test_crescent_road_unlocks_late_fishing(self) -> None:
+        self.world_setup()
+        state = CollectionState(self.multiworld)
+        self._collect_rod(state)
+        self._collect_named_portals(state, CRESCENT_ROAD_ROUTE_RANDOM_PORTALS)
+        for check_name in LATE_FISHING_CHECKS:
+            with self.subTest(check=check_name):
+                self.assertTrue(state.can_reach(check_name, "Location", self.player))
+
+
 class TestEarlyMidMiningChecks(AtlyssTestBase):
     """Mining Lv. 1–6 route + profession-grind bands (random portals)."""
 
@@ -220,17 +292,14 @@ class TestEarlyMidMiningChecks(AtlyssTestBase):
                         f"{check_name} blocked on {route_name} route",
                     )
 
-    def test_early_mining_blocked_without_arcwood_or_effold(self) -> None:
+    def test_outer_sanctum_only_cannot_reach_mining_two(self) -> None:
+        """1→2 needs Hefty Stone (arcwood|effold); Dense Stone starts at mining level 2."""
         self.world_setup()
         state = CollectionState(self.multiworld)
         self._collect_pickaxe(state)
         state.collect(self.get_item_by_name("Outer Sanctum Portal"))
-        for check_name in EARLY_ROUTE_MINING_CHECKS:
-            with self.subTest(check=check_name):
-                self.assertFalse(
-                    state.can_reach(check_name, "Location", self.player),
-                    f"{check_name} reachable with Outer Sanctum only",
-                )
+        self.assertFalse(state.can_reach("Mining Lv. 2", "Location", self.player))
+        self.assertFalse(state.can_reach("Mining Lv. 3", "Location", self.player))
 
     def test_mid_mining_reachable_at_tuul_valley(self) -> None:
         self.world_setup()

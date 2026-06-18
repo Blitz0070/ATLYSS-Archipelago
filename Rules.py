@@ -165,33 +165,6 @@ def has_portal_route(state, player, areas: tuple) -> bool:
     return has_all_areas(state, player, areas)
 
 
-def has_fishing_mid_route(state, player) -> bool:
-    return has_area_for_gameplay(state, player, "Sanctum Catacombs lvl 1")
-
-
-def has_fishing_high_route(state, player) -> bool:
-    return (
-        has_area_for_gameplay(state, player, "Sanctum Catacombs lvl 1")
-        and has_area_for_gameplay(state, player, "Crescent Road")
-        and has_area_for_gameplay(state, player, "Effold Terrace")
-    )
-
-
-def has_mining_early_route(state, player) -> bool:
-    return (
-        has_portal_gate(state, player, "arcwood_pass")
-        or has_portal_gate(state, player, "effold_terrace")
-    )
-
-
-def has_mining_mid_route(state, player) -> bool:
-    return has_portal_gate(state, player, "tuul_valley")
-
-
-def has_mining_high_route(state, player) -> bool:
-    return has_portal_gate(state, player, "tuul_enclave")
-
-
 # =============================================================================
 # Level grind + boss access
 # =============================================================================
@@ -212,11 +185,37 @@ def can_grind_level(state, player, level) -> bool:
 
 
 def can_grind_fish(state, player, level) -> bool:
-    return can_grind(state, player, level, fishing_grind_data)
+    """Fishing profession level via spot train bands (FishingData.FISHING_TRAIN_BANDS)."""
+    from .FishingData import FISHING_TRAIN_BANDS
+
+    if level > 30:
+        return can_grind_fish(state, player, 30)
+    if level <= 1:
+        return True
+    from_level = level - 1
+    for band in FISHING_TRAIN_BANDS:
+        if band.min_fish_level <= from_level and level <= band.max_train_level:
+            if not band.portal_gates or any(
+                has_portal_gate(state, player, gate_id) for gate_id in band.portal_gates
+            ):
+                return can_grind_fish(state, player, from_level)
+    return False
 
 
 def can_grind_mine(state, player, level) -> bool:
-    return can_grind(state, player, level, mining_grind_data)
+    """Mining profession level via node train bands (MiningData.MINING_TRAIN_BANDS)."""
+    from .MiningData import MINING_TRAIN_BANDS
+
+    if level > 30:
+        return can_grind_mine(state, player, 30)
+    if level <= 1:
+        return True
+    from_level = level - 1
+    for band in MINING_TRAIN_BANDS:
+        if band.min_mine_level <= from_level and level <= band.max_train_level:
+            if any(has_portal_gate(state, player, gate_id) for gate_id in band.portal_gates):
+                return can_grind_mine(state, player, from_level)
+    return False
 
 
 def can_beat_enemy(state, player, enemy_name) -> bool:

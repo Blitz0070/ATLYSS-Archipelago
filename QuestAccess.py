@@ -355,12 +355,13 @@ def _validate_portal_gates_referenced() -> None:
             iter_portal_gate_ids_from_groups(normalize_portal_gate_groups(spec.portal_gates_all))
         )
     referenced.add(SHOP_AP_ITEMS_PORTAL_GATE)
-    # Achievement locations (AtlyssRules/catalog.py) and Rules.py mining/fishing routes.
+    from .MiningData import iter_mining_train_portal_gates
+    from .FishingData import iter_fishing_train_portal_gates
+
+    referenced.update(iter_mining_train_portal_gates())
+    referenced.update(iter_fishing_train_portal_gates())
+    # Achievement locations (AtlyssRules/catalog.py).
     referenced.update({
-        "arcwood_pass",
-        "effold_terrace",
-        "tuul_valley",
-        "tuul_enclave",
         "sanctum_catacombs",
         "sanctum_catacombs_f2",
         "sanctum_catacombs_f3",

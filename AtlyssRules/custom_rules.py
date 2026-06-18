@@ -13,8 +13,6 @@ from rule_builder.rules import Has, Rule, True_
 from .portal_compose import (
     build_area_gameplay_rule,
     build_can_beat_enemy_rule,
-    build_fishing_route_rule,
-    build_mining_route_rule,
     build_portal_gate_rule,
     build_shop_slot_rule,
     can_beat_enemy_explain_label,
@@ -461,16 +459,43 @@ class CanGrindMineLevel(Rule["Atlyss"], game="Atlyss"):
 
 
 @dataclasses.dataclass()
+class CanGrindFishLevel(Rule["Atlyss"], game="Atlyss"):
+    level: int
+
+    @override
+    def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
+        return self.Resolved(self.level, player=world.player, caching_enabled=caching_enabled(world))
+
+    class Resolved(Rule.Resolved):
+        level: int
+
+        @override
+        def _evaluate(self, state: CollectionState) -> bool:
+            from worlds.atlyss.Rules import can_grind_fish
+
+            return can_grind_fish(state, self.player, self.level)
+
+        @override
+        def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
+            color = "green" if state and self(state) else "salmon"
+            return [
+                {"type": "text", "text": "Fishing Lv. "},
+                {"type": "color", "color": color, "text": str(self.level)},
+            ]
+
+        @override
+        def explain_str(self, state: CollectionState | None = None) -> str:
+            prefix = "Fishing Lv. " if state is None or self(state) else "Cannot reach Fishing Lv. "
+            return prefix + str(self.level)
+
+
+@dataclasses.dataclass()
 class CanGrindFishing(Rule["Atlyss"], game="Atlyss"):
     level: int
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return (
-            RequiresFishingRod()
-            & build_fishing_route_rule(world, self.level)
-            & CanGrindLevel(self.level)
-        ).resolve(world)
+        return (RequiresFishingRod() & CanGrindFishLevel(self.level)).resolve(world)
 
 
 @dataclasses.dataclass()
@@ -479,11 +504,7 @@ class CanGrindMining(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return (
-            RequiresPickaxe()
-            & build_mining_route_rule(world, self.level)
-            & CanGrindMineLevel(self.level)
-        ).resolve(world)
+        return (RequiresPickaxe() & CanGrindMineLevel(self.level)).resolve(world)
 
 
 @dataclasses.dataclass()

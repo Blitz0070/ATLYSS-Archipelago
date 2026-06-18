@@ -151,31 +151,6 @@ def build_area_gameplay_rule(world: "Atlyss", area_name: str) -> Rule:
     return base
 
 
-def build_fishing_route_rule(world: "Atlyss", level: int) -> Rule:
-    if level >= 7:
-        return (
-            build_area_gameplay_rule(world, "Sanctum Catacombs lvl 1")
-            & build_area_gameplay_rule(world, "Crescent Road")
-            & build_area_gameplay_rule(world, "Effold Terrace")
-        )
-    if level >= 4:
-        return build_area_gameplay_rule(world, "Sanctum Catacombs lvl 1")
-    return True_()
-
-
-def build_mining_route_rule(world: "Atlyss", level: int) -> Rule:
-    if level >= 7:
-        return build_portal_gate_rule(world, "tuul_enclave")
-    if level >= 4:
-        return build_portal_gate_rule(world, "tuul_valley")
-    if level >= 2:
-        return (
-            build_portal_gate_rule(world, "arcwood_pass")
-            | build_portal_gate_rule(world, "effold_terrace")
-        )
-    return True_()
-
-
 def _catacombs_floor_depth(area: str) -> int:
     if "lvl 3" in area:
         return 3
