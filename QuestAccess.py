@@ -239,6 +239,7 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
     "Eradicating the Undead": QuestAccessSpec(12, after_quest="The Voice of Zuulneruda", kill_enemies=("Miasma", "Poltergeist", "Hellsludge")),
     "Call of Fury": QuestAccessSpec(4),
     "Cold Shoulder": QuestAccessSpec(4),
+    "Blossom of Life": QuestAccessSpec(12),
     "Focusin' in": QuestAccessSpec(4),
     "Huntin' Hogs": QuestAccessSpec(7, after_quest="A Warm Welcome", kill_enemies=("Mekboar",)),
     "Wicked Wizboars": QuestAccessSpec(10, kill_enemies=("Wizboar",)),
@@ -286,11 +287,7 @@ QUEST_ACCESS: Dict[str, QuestAccessSpec] = {
 def _validate_quest_table() -> None:
     from .Locations import enemy_data
 
-    from .Locations import factory_missing_quests
-
-    quest_names = {name for name, _region in quests} | {
-        name for name, _region in factory_missing_quests
-    }
+    quest_names = {name for name, _region in quests}
     missing = quest_names - QUEST_ACCESS.keys()
     extra = QUEST_ACCESS.keys() - quest_names
     if missing:

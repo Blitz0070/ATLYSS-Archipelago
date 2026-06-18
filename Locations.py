@@ -21,10 +21,12 @@ quests = [
     ["Purging the Grove", "Sanctum"],
     ["Cleansing the Grove", "Sanctum"],
     ["Call of Fury", "Sanctum"],
+    ["Cold Shoulder", "Sanctum"],
     ["Mastery of Strength", "Sanctum"],
     ["Mastery of Dexterity", "Sanctum"],
     ["Mastery of Mind", "Sanctum"],
     ["Beckoning Foes", "Sanctum"],
+    ["Blossom of Life", "Sanctum"],
     ["Ghostly Goods", "Sanctum"],
     ["Makin' a Mekspear", "Sanctum"],
     ["Makin' a Wizwand", "Sanctum"],
@@ -61,10 +63,8 @@ quests = [
     ["Sapphite Ingots", "Sanctum"]
 ]
 
-# Factory omitted; append at end of location_dict so existing AP ids stay stable.
-factory_missing_quests = [
-    ["Cold Shoulder", "Sanctum"],
-]
+# Factory omitted these; keep stable AP ids at end of location_dict (not mid-quests order).
+_TRAILING_QUEST_LOCATION_NAMES = ("Cold Shoulder", "Blossom of Life")
 
 levels = [
     ["Reach Level 2", "Menu"],
@@ -192,14 +192,17 @@ from .ProfessionToolData import PROFESSION_TOOL_BUYS
 profession_tool_buys = [[location_name, "Menu"] for location_name, _ in PROFESSION_TOOL_BUYS]
 
 location_dict = [
-    *[items[0] for items in quests],
+    *[
+        items[0] for items in quests
+        if items[0] not in _TRAILING_QUEST_LOCATION_NAMES
+    ],
     *[items[0] for items in levels],
     *[items[0] for items in merchants],
     *[items[0] for items in professions],
     *[items[0] for items in achievements],
     *[items[0] for items in bosses],
     *[items[0] for items in profession_tool_buys],
-    *[items[0] for items in factory_missing_quests],
+    *_TRAILING_QUEST_LOCATION_NAMES,
 ]
 
 location_grind_data = [
@@ -300,8 +303,7 @@ from typing import Dict, Set
 _HIGH_LEVEL_JUNK_MILESTONES = frozenset({"Reach Level 28", "Reach Level 30", "Reach Level 32"})
 
 location_name_groups: Dict[str, Set[str]] = {
-    "Quests": {name for name, _region in quests}
-    | {name for name, _region in factory_missing_quests},
+    "Quests": {name for name, _region in quests},
     "Levels": {name for name, _region in levels},
     "Shops": {name for name, _region in merchants},
     "Professions": {name for name, _region in professions},

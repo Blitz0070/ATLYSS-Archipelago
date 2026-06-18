@@ -80,9 +80,6 @@ def gen_create_regions(world):
     for name, region_key in quests:
         if _in_scope(world, name, region_key):
             make_location(world, name, region_map[region_key])
-    for name, region_key in factory_missing_quests:
-        if _in_scope(world, name, region_key):
-            make_location(world, name, region_map[region_key])
     for name, region_key in levels:
         if _in_scope(world, name, region_key):
             make_location(world, name, region_map[region_key])
