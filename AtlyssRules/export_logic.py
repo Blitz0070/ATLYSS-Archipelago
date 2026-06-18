@@ -78,9 +78,11 @@ def _atlyss_rule_template(access_rule: Rule.Resolved) -> Rule["Atlyss"] | None:
     from worlds.atlyss.AtlyssRules.custom_rules import (
         CanAccessAreaGameplay,
         CanBeatBoss,
+        CanGrindFishing,
         CanGrindLevel,
         CanGrindFishLevel,
         CanGrindMineLevel,
+        CanGrindMining,
         HasPortalGate,
         HasProgressionItem,
         HasQuestComplete,
@@ -101,8 +103,12 @@ def _atlyss_rule_template(access_rule: Rule.Resolved) -> Rule["Atlyss"] | None:
         return CanGrindLevel(access_rule.level)
     if name == "CanGrindMineLevel":
         return CanGrindMineLevel(access_rule.level)
+    if name == "CanGrindMining":
+        return CanGrindMining(access_rule.level)
     if name == "CanGrindFishLevel":
         return CanGrindFishLevel(access_rule.level)
+    if name == "CanGrindFishing":
+        return CanGrindFishing(access_rule.level)
     if name == "CanBeatBoss":
         return CanBeatBoss(access_rule.enemy_name)
     if name == "HasProgressionItem":

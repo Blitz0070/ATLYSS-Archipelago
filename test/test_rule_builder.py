@@ -7,6 +7,7 @@ from rule_builder.rules import Rule
 
 from .bases import AtlyssTestBase
 from worlds.atlyss.AtlyssRules.custom_rules import (
+    CanGrindMining,
     HasPortalGate,
     QuestCheck,
     ShopSlotCheck,
@@ -124,6 +125,33 @@ class TestPortalExplain(AtlyssTestBase):
         text = quest_check_explain_str(world, "Dense Ingots")
         self.assertIn("Dense Ingots", text)
         self.assertIn("Progressive", text)
+
+    def test_mining_lv4_explain_uses_player_portal_labels(self) -> None:
+        self.world_setup()
+        world = self.multiworld.worlds[self.player]
+        text = CanGrindMining(4).resolve(world).explain_str()
+        self.assertIn("Pickaxe", text)
+        self.assertIn("Mining Lv. 4", text)
+        self.assertIn("Progressive Sanctum Portal", text)
+        self.assertIn("Progressive Tuul Portal", text)
+        self.assertIn(" OR ", text)
+        self.assertNotIn("tuul_valley", text)
+        self.assertNotIn("Mining Lv. 3", text)
+
+    def test_mining_grind_rule_tree_matches_can_grind_mine(self) -> None:
+        from worlds.atlyss.AtlyssRules.profession_grind_compose import build_mining_grind_rule
+        from worlds.atlyss.Rules import can_grind_mine
+
+        self.world_setup()
+        world = self.multiworld.worlds[self.player]
+        state = CollectionState(self.multiworld)
+        for level in range(1, 8):
+            rule = build_mining_grind_rule(world, level).resolve(world)
+            self.assertEqual(
+                rule(state),
+                can_grind_mine(state, self.player, level),
+                f"level {level}",
+            )
 
     def test_wicked_wizboars_location_rule_is_quest_check_resolved(self) -> None:
         self.world_setup()

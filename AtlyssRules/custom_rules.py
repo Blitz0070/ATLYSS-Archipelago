@@ -19,6 +19,12 @@ from .portal_compose import (
     caching_enabled,
     portal_gate_explain_label,
 )
+from .profession_grind_compose import (
+    build_fishing_grind_rule,
+    build_mining_grind_rule,
+    format_fishing_grind_explain,
+    format_mining_grind_explain,
+)
 
 if TYPE_CHECKING:
     from worlds.atlyss import Atlyss
@@ -433,29 +439,45 @@ class CanGrindMineLevel(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return self.Resolved(self.level, player=world.player, caching_enabled=caching_enabled(world))
+        child = build_mining_grind_rule(world, self.level).resolve(world)
+        return self.Resolved(
+            self.level,
+            child,
+            format_mining_grind_explain(world, self.level),
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
 
     class Resolved(Rule.Resolved):
         level: int
+        child: Rule.Resolved
+        base_explain: str
+        skip_cache: ClassVar[bool] = True
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            from worlds.atlyss.Rules import can_grind_mine
+            return self.child(state)
 
-            return can_grind_mine(state, self.player, self.level)
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
 
         @override
         def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
-            color = "green" if state and self(state) else "salmon"
+            if state is None:
+                return [{"type": "text", "text": self.base_explain}]
+            color = "green" if self(state) else "salmon"
             return [
-                {"type": "text", "text": "Mining Lv. "},
-                {"type": "color", "color": color, "text": str(self.level)},
+                {"type": "color", "color": color, "text": "Reachable" if self(state) else "Blocked"},
+                {"type": "text", "text": ": " + self.base_explain},
             ]
 
         @override
         def explain_str(self, state: CollectionState | None = None) -> str:
-            prefix = "Mining Lv. " if state is None or self(state) else "Cannot reach Mining Lv. "
-            return prefix + str(self.level)
+            if state is None:
+                return self.base_explain
+            prefix = "Reachable: " if self(state) else "Blocked: "
+            return prefix + self.base_explain
 
 
 @dataclasses.dataclass()
@@ -464,29 +486,49 @@ class CanGrindFishLevel(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return self.Resolved(self.level, player=world.player, caching_enabled=caching_enabled(world))
+        child = build_fishing_grind_rule(world, self.level).resolve(world)
+        return self.Resolved(
+            self.level,
+            child,
+            format_fishing_grind_explain(world, self.level),
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
 
     class Resolved(Rule.Resolved):
         level: int
+        child: Rule.Resolved
+        base_explain: str
+        skip_cache: ClassVar[bool] = True
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            from worlds.atlyss.Rules import can_grind_fish
+            return self.child(state)
 
-            return can_grind_fish(state, self.player, self.level)
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
 
         @override
         def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
-            color = "green" if state and self(state) else "salmon"
+            if state is None:
+                return [{"type": "text", "text": self.base_explain}]
+            color = "green" if self(state) else "salmon"
             return [
-                {"type": "text", "text": "Fishing Lv. "},
-                {"type": "color", "color": color, "text": str(self.level)},
+                {"type": "color", "color": color, "text": "Reachable" if self(state) else "Blocked"},
+                {"type": "text", "text": ": " + self.base_explain},
             ]
 
         @override
         def explain_str(self, state: CollectionState | None = None) -> str:
-            prefix = "Fishing Lv. " if state is None or self(state) else "Cannot reach Fishing Lv. "
-            return prefix + str(self.level)
+            if state is None:
+                return self.base_explain
+            prefix = "Reachable: " if self(state) else "Blocked: "
+            return prefix + self.base_explain
+
+
+def _profession_grind_with_tool_explain(tool_name: str, grind_explain: str) -> str:
+    return f"{tool_name} & {grind_explain}"
 
 
 @dataclasses.dataclass()
@@ -495,7 +537,47 @@ class CanGrindFishing(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return (RequiresFishingRod() & CanGrindFishLevel(self.level)).resolve(world)
+        grind = build_fishing_grind_rule(world, self.level)
+        grind_explain = format_fishing_grind_explain(world, self.level)
+        child = (RequiresFishingRod() & grind).resolve(world)
+        return self.Resolved(
+            self.level,
+            child,
+            _profession_grind_with_tool_explain("Fishing Rod", grind_explain),
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
+
+    class Resolved(Rule.Resolved):
+        level: int
+        child: Rule.Resolved
+        base_explain: str
+        skip_cache: ClassVar[bool] = True
+
+        @override
+        def _evaluate(self, state: CollectionState) -> bool:
+            return self.child(state)
+
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
+
+        @override
+        def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
+            if state is None:
+                return [{"type": "text", "text": self.base_explain}]
+            color = "green" if self(state) else "salmon"
+            return [
+                {"type": "color", "color": color, "text": "Reachable" if self(state) else "Blocked"},
+                {"type": "text", "text": ": " + self.base_explain},
+            ]
+
+        @override
+        def explain_str(self, state: CollectionState | None = None) -> str:
+            if state is None:
+                return self.base_explain
+            prefix = "Reachable: " if self(state) else "Blocked: "
+            return prefix + self.base_explain
 
 
 @dataclasses.dataclass()
@@ -504,7 +586,47 @@ class CanGrindMining(Rule["Atlyss"], game="Atlyss"):
 
     @override
     def _instantiate(self, world: "Atlyss") -> Rule.Resolved:
-        return (RequiresPickaxe() & CanGrindMineLevel(self.level)).resolve(world)
+        grind = build_mining_grind_rule(world, self.level)
+        grind_explain = format_mining_grind_explain(world, self.level)
+        child = (RequiresPickaxe() & grind).resolve(world)
+        return self.Resolved(
+            self.level,
+            child,
+            _profession_grind_with_tool_explain("Pickaxe", grind_explain),
+            player=world.player,
+            caching_enabled=caching_enabled(world),
+        )
+
+    class Resolved(Rule.Resolved):
+        level: int
+        child: Rule.Resolved
+        base_explain: str
+        skip_cache: ClassVar[bool] = True
+
+        @override
+        def _evaluate(self, state: CollectionState) -> bool:
+            return self.child(state)
+
+        @override
+        def item_dependencies(self) -> dict[str, set[int]]:
+            return self.child.item_dependencies()
+
+        @override
+        def explain_json(self, state: CollectionState | None = None) -> list[JSONMessagePart]:
+            if state is None:
+                return [{"type": "text", "text": self.base_explain}]
+            color = "green" if self(state) else "salmon"
+            return [
+                {"type": "color", "color": color, "text": "Reachable" if self(state) else "Blocked"},
+                {"type": "text", "text": ": " + self.base_explain},
+            ]
+
+        @override
+        def explain_str(self, state: CollectionState | None = None) -> str:
+            if state is None:
+                return self.base_explain
+            prefix = "Reachable: " if self(state) else "Blocked: "
+            return prefix + self.base_explain
 
 
 @dataclasses.dataclass()

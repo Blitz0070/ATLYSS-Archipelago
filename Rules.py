@@ -186,36 +186,16 @@ def can_grind_level(state, player, level) -> bool:
 
 def can_grind_fish(state, player, level) -> bool:
     """Fishing profession level via spot train bands (FishingData.FISHING_TRAIN_BANDS)."""
-    from .FishingData import FISHING_TRAIN_BANDS
+    from .AtlyssRules.profession_grind_compose import evaluate_fishing_grind
 
-    if level > 30:
-        return can_grind_fish(state, player, 30)
-    if level <= 1:
-        return True
-    from_level = level - 1
-    for band in FISHING_TRAIN_BANDS:
-        if band.min_fish_level <= from_level and level <= band.max_train_level:
-            if not band.portal_gates or any(
-                has_portal_gate(state, player, gate_id) for gate_id in band.portal_gates
-            ):
-                return can_grind_fish(state, player, from_level)
-    return False
+    return evaluate_fishing_grind(state, player, level)
 
 
 def can_grind_mine(state, player, level) -> bool:
     """Mining profession level via node train bands (MiningData.MINING_TRAIN_BANDS)."""
-    from .MiningData import MINING_TRAIN_BANDS
+    from .AtlyssRules.profession_grind_compose import evaluate_mining_grind
 
-    if level > 30:
-        return can_grind_mine(state, player, 30)
-    if level <= 1:
-        return True
-    from_level = level - 1
-    for band in MINING_TRAIN_BANDS:
-        if band.min_mine_level <= from_level and level <= band.max_train_level:
-            if any(has_portal_gate(state, player, gate_id) for gate_id in band.portal_gates):
-                return can_grind_mine(state, player, from_level)
-    return False
+    return evaluate_mining_grind(state, player, level)
 
 
 def can_beat_enemy(state, player, enemy_name) -> bool:
